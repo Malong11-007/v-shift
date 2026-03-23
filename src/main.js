@@ -13,6 +13,7 @@ import Player from './entities/Player.js';
 import roundManager from './game/RoundManager.js';
 import economyManager from './game/EconomyManager.js';
 import matchManager, { GAME_MODES } from './game/MatchManager.js';
+import competitiveFlow from './game/CompetitiveFlow.js';
 import hud from './ui/HUD.js';
 import uiManager from './ui/UIManager.js';
 import tutorial from './ui/Tutorial.js';
@@ -92,6 +93,7 @@ const init = async () => {
 
     // Initialize Game Managers
     engine.addUpdatable(roundManager);
+    engine.addUpdatable(competitiveFlow);
     
     // Default to competitive match start
     matchManager.setMode(GAME_MODES.COMPETITIVE);
@@ -166,4 +168,3 @@ const init = async () => {
 };
 
 init();
-
