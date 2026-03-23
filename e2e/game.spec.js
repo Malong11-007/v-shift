@@ -2,6 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('V-SHIFT End-to-End Game Flow', () => {
 
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('vshift_callsign', 'TESTPLAYER');
+    });
+  });
+
   test('should load the main menu and display the title', async ({ page }) => {
     // Navigate to the root URL
     await page.goto('/', { waitUntil: 'networkidle' });

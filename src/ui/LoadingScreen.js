@@ -16,12 +16,13 @@ class LoadingScreen {
         this.container.style.zIndex = '9999';
         this.container.style.pointerEvents = 'auto';
 
-        this.title = document.createElement('h1');
+        this.title = document.createElement('div');
         this.title.innerText = 'V-SHIFT';
         this.title.style.fontSize = '80px';
         this.title.style.margin = '0 0 40px 0';
         this.title.style.letterSpacing = '10px';
         this.title.style.textShadow = '0 0 20px #00f0ff';
+        this.title.style.fontWeight = '800';
         this.container.appendChild(this.title);
 
         this.statusText = document.createElement('p');
