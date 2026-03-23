@@ -2,6 +2,8 @@ class EconomyManager {
     constructor() {
         this.cash = 800;
         this.maxCash = 9000;
+        this.buyWindowOpen = false;
+        this.buyWindowRemaining = 0;
         
         // Loss streak dictates round loss bonus
         this.lossStreak = 0;
@@ -28,6 +30,31 @@ class EconomyManager {
             return true;
         }
         return false;
+    }
+
+    openBuyPhase(durationSeconds = 0) {
+        this.buyWindowOpen = true;
+        this.buyWindowRemaining = durationSeconds;
+        window.dispatchEvent(new CustomEvent('buyPhaseChanged', { detail: { open: true, duration: durationSeconds } }));
+    }
+
+    closeBuyPhase() {
+        if (!this.buyWindowOpen) return;
+        this.buyWindowOpen = false;
+        this.buyWindowRemaining = 0;
+        window.dispatchEvent(new CustomEvent('buyPhaseChanged', { detail: { open: false } }));
+    }
+
+    purchase(cost) {
+        if (!this.buyWindowOpen) {
+            return { success: false, reason: 'BUY_CLOSED', cash: this.cash };
+        }
+        const success = this.spendCash(cost);
+        return {
+            success,
+            reason: success ? 'OK' : 'INSUFFICIENT_FUNDS',
+            cash: this.cash
+        };
     }
 
     handleKill(e) {
@@ -66,6 +93,8 @@ class EconomyManager {
     reset() {
         this.cash = 800;
         this.lossStreak = 0;
+        this.buyWindowOpen = false;
+        this.buyWindowRemaining = 0;
         window.dispatchEvent(new CustomEvent('cashChanged', { detail: { cash: this.cash, delta: 0, reason: 'Match Start' } }));
     }
 }

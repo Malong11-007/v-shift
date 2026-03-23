@@ -12,6 +12,7 @@ class CharacterModel {
         this.pantsMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.9 });
         this.bootMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
         this.gloveMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+        this.accentMat = new THREE.MeshStandardMaterial({ color: 0x99e0ff, emissive: 0x224466, emissiveIntensity: 0.35, roughness: 0.4 });
         
         // 1. Hips (Root of skeleton)
         this.hips = new THREE.Group();
@@ -32,6 +33,9 @@ class CharacterModel {
         
         const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.3, 0.2), this.clothesMat);
         this.chest.add(chestMesh);
+        const chestStripe = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.04, 0.22), this.accentMat);
+        chestStripe.position.y = 0.1;
+        this.chest.add(chestStripe);
         
         // 3. Neck -> Head
         this.neck = new THREE.Group();
@@ -44,6 +48,9 @@ class CharacterModel {
         
         const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.25, 0.22), this.skinMat);
         this.head.add(headMesh);
+        const visor = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.02), this.accentMat);
+        visor.position.set(0, 0.02, 0.12);
+        this.head.add(visor);
         
         // 4. Arms
         this.shoulderR = new THREE.Group();
