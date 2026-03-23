@@ -9,6 +9,7 @@ export default defineConfig({
     ['list'],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['json', { outputFile: 'test-results/playwright/results.json' }],
+    ...(process.env.CI ? [['github']] : []),
   ],
   use: {
     baseURL: 'http://127.0.0.1:5173',
