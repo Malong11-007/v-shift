@@ -5,6 +5,7 @@ import arena from '../world/Arena.js';
 import engine from '../core/Engine.js';
 import audioManager from '../core/AudioManager.js';
 import gameState, { STATES } from '../core/GameState.js';
+import roundManager, { ROUND_STATES } from '../game/RoundManager.js';
 import CharacterModel from '../models/CharacterModel.js';
 import ProceduralAnimator from '../models/ProceduralAnimator.js';
 import WeaponFactory from '../models/WeaponFactory.js';
@@ -25,6 +26,7 @@ export default class Bot {
         this.speed = 3.0; // Slower than player
         this.lastShotTime = 0;
         this.fireRate = 400; // ms
+        this.spawnProtectionUntil = performance.now() + 2000;
 
         // Visuals
         this.group = new THREE.Group();
@@ -223,6 +225,7 @@ export default class Bot {
     respawn() {
         this.health = 100;
         this.state = BOT_STATES.PATROL;
+        this.spawnProtectionUntil = performance.now() + 2000;
         
         // Reset visuals
         if (this.mesh) this.mesh.visible = true;
@@ -250,6 +253,7 @@ export default class Bot {
 
         // Don't run AI unless the game is actively being played
         if (gameState.currentState !== STATES.PLAYING) return;
+        if (roundManager.state !== ROUND_STATES.LIVE) return;
         
         if (!this.strafeTimer) this.strafeTimer = 0;
         this.strafeTimer += dt;
@@ -327,7 +331,7 @@ export default class Bot {
             }
             
             // Shoot logic
-            if (performance.now() - this.lastShotTime > this.fireRate) {
+            if (performance.now() >= this.spawnProtectionUntil && performance.now() - this.lastShotTime > this.fireRate) {
                 this.shoot(distToPlayer);
                 this.lastShotTime = performance.now();
                 this.fireRate = 500 + Math.random() * 500;
