@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('V-SHIFT End-to-End Game Flow', () => {
+  const gotoMainMenu = async (page) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('vshift_callsign', 'CI_AGENT');
+    });
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: /^PLAY$/ })).toBeVisible({ timeout: 30000 });
+  };
 
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
@@ -9,26 +16,28 @@ test.describe('V-SHIFT End-to-End Game Flow', () => {
   });
 
   test('should load the main menu and display the title', async ({ page }) => {
-    // Navigate to the root URL
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await gotoMainMenu(page);
 
-    // Verify title text exists (increased timeout for headless asset generation)
-    await expect(page.locator('h1')).toContainText('V-SHIFT', { timeout: 30000 });
+    // Verify title text exists
+    await expect(page.locator('h1').first()).toContainText('V-SHIFT');
 
     // Verify PLAY/SETTINGS buttons
-    await expect(page.locator('button', { hasText: 'PLAY' })).toBeVisible();
-    await expect(page.locator('button', { hasText: 'SETTINGS' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^PLAY$/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^SETTINGS$/ })).toBeVisible();
   });
 
   test('should allow selecting an archetype and deploying into the game', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'V-SHIFT' })).toBeVisible({ timeout: 15000 });
+    await gotoMainMenu(page);
 
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
 
     // Click PLAY
     await page.getByRole('button', { name: /^PLAY$/ }).click();
+
+    // Choose offline mode path
+    await expect(page.getByRole('heading', { name: 'SELECT DEPLOYMENT MODE' })).toBeVisible();
+    await page.getByRole('button', { name: 'DEPLOY NOW' }).click();
 
     // Verify Class Select screen
     await expect(page.getByRole('heading', { name: 'SELECT ARCHETYPE & LOADOUT' })).toBeVisible();
@@ -40,7 +49,7 @@ test.describe('V-SHIFT End-to-End Game Flow', () => {
     await page.getByRole('button', { name: 'DEPLOY TO ARENA' }).click();
 
     // Wait for the game canvas
-    const canvas = page.locator('canvas');
+    const canvas = page.locator('#game-canvas');
     await expect(canvas).toBeVisible({ timeout: 20000 });
 
     // Ensure HUD health is visible
@@ -52,13 +61,12 @@ test.describe('V-SHIFT End-to-End Game Flow', () => {
   });
 
   test('should allow modifying settings and persisting them', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'V-SHIFT' })).toBeVisible({ timeout: 15000 });
+    await gotoMainMenu(page);
 
     // Open settings
     await page.getByRole('button', { name: /^SETTINGS$/ }).click();
 
-    await expect(page.getByRole('heading', { name: 'SETTINGS' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'SYSTEM SETTINGS' })).toBeVisible();
 
     // Change FOV. The FOV container usually has text 'FOV'
     const anySlider = page.locator('input[type="range"]').first();
@@ -72,8 +80,8 @@ test.describe('V-SHIFT End-to-End Game Flow', () => {
     });
 
     // Close settings
-    await page.getByRole('button', { name: '← BACK TO MENU' }).click();
-    await expect(page.getByRole('heading', { name: 'SETTINGS' })).toBeHidden();
+    await page.getByRole('button', { name: '← BACK' }).click();
+    await expect(page.getByRole('heading', { name: 'SYSTEM SETTINGS' })).toBeHidden();
 
     // Verify localStorage persistence
     const savedConfig = await page.evaluate(() => {

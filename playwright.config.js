@@ -5,10 +5,15 @@ export default defineConfig({
   fullyParallel: true,
   retries: 1,
   workers: 1, // Minimize concurrent resources for WebGL testing
-  reporter: 'list',
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['json', { outputFile: 'test-results/playwright/results.json' }],
+  ],
   use: {
     baseURL: 'http://127.0.0.1:5173',
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
     viewport: { width: 1280, height: 720 },
   },
   projects: [
