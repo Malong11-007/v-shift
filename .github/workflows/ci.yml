@@ -41,14 +41,17 @@ jobs:
           if [ -f vitest-results.json ]; then
             mv vitest-results.json test-results/vitest/results.json
           fi
+          if [ -f vitest-results.xml ]; then
+            mv vitest-results.xml test-results/vitest/results.xml
+          fi
 
       - name: Report Vitest results
         if: always()
         uses: dorny/test-reporter@v3
         with:
           name: Unit Tests
-          path: test-results/vitest/results.json
-          reporter: jest-json
+          path: test-results/vitest/results.xml
+          reporter: jest-junit
           fail-on-error: false
 
       - name: Install Playwright browsers
