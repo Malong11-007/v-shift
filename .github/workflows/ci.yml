@@ -28,7 +28,7 @@ jobs:
         run: npm run build
 
       - name: Run unit tests
-        run: npm run test -- --run
+        run: npm run test -- --run --reporter=default --reporter=json --outputFile=test-results/vitest/results.json
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
