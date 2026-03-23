@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 jobs:
   validate:
@@ -16,10 +17,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
@@ -40,6 +41,18 @@ jobs:
           if [ -f vitest-results.json ]; then
             mv vitest-results.json test-results/vitest/results.json
           fi
+          if [ -f vitest-results.xml ]; then
+            mv vitest-results.xml test-results/vitest/results.xml
+          fi
+
+      - name: Report Vitest results
+        if: always()
+        uses: dorny/test-reporter@v3
+        with:
+          name: Unit Tests
+          path: test-results/vitest/results.xml
+          reporter: jest-junit
+          fail-on-error: false
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -49,7 +62,7 @@ jobs:
 
       - name: Upload Playwright HTML report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report
@@ -58,7 +71,7 @@ jobs:
 
       - name: Upload Playwright test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: test-results
