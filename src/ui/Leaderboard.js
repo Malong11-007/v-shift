@@ -69,7 +69,14 @@ class Leaderboard {
 
     async refresh() {
         this.list.innerHTML = '';
+        this.loading.innerText = 'SYNCHRONIZING RECORDS...';
+        this.loading.style.color = '#00f0ff';
         this.loading.style.display = 'block';
+        if (api.isOffline()) {
+            this.loading.innerText = 'OFFLINE MODE: BACKEND DISABLED, NO GLOBAL SCORES';
+            this.loading.style.color = '#ffae00';
+            return;
+        }
         
         try {
             const data = await api.getLeaderboard();

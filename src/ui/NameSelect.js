@@ -73,6 +73,13 @@ class NameSelect {
         this.errorText.style.marginBottom = '20px';
         this.container.appendChild(this.errorText);
 
+        this.offlineNotice = document.createElement('p');
+        this.offlineNotice.style.color = '#00f0ff';
+        this.offlineNotice.style.marginBottom = '20px';
+        this.offlineNotice.style.display = 'none';
+        this.offlineNotice.innerText = 'Offline mode: backend disabled, callsign will stay on this device.';
+        this.container.appendChild(this.offlineNotice);
+
         this.button = document.createElement('button');
         this.button.innerText = 'CONFIRM';
         this.button.style.padding = '15px 50px';
@@ -116,14 +123,24 @@ class NameSelect {
             localStorage.setItem('vshift_callsign', name);
             gameState.transition(STATES.MAIN_MENU);
         } catch (e) {
-            this.errorText.innerText = 'Server error. Is the backend running?';
-            this.button.disabled = false;
-            this.button.innerText = 'CONFIRM';
+            if (api.isOffline()) {
+                localStorage.setItem('vshift_callsign', name);
+                gameState.transition(STATES.MAIN_MENU);
+            } else {
+                this.errorText.innerText = 'Server error. Is the backend running?';
+                this.button.disabled = false;
+                this.button.innerText = 'CONFIRM';
+                return;
+            }
         }
+
+        this.button.disabled = false;
+        this.button.innerText = 'CONFIRM';
     }
 
     show(payload) {
         this.container.style.display = 'flex';
+        this.offlineNotice.style.display = api.isOffline() ? 'block' : 'none';
         this.input.focus();
     }
 
