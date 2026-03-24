@@ -57,6 +57,12 @@ npm run build
 npm run test -- --run
 ```
 
+## GitHub Pages Test Build
+
+- A workflow (`.github/workflows/gh-pages.yml`) builds `npm run build` with `VITE_BASE_PATH=/v-shift/` and deploys `dist/` to GitHub Pages.
+- Pages URL: https://malong11-007.github.io/v-shift/ (auto-updates on pushes to `main` or via manual `Run workflow`).
+- If Pages is disabled, enable it in **Settings → Pages → Build and deployment → GitHub Actions**.
+
 ## Current Gameplay Notes
 
 - Bots now respect round flow and do not run combat AI during `FREEZE_TIME`.
