@@ -31,8 +31,10 @@ class StatsManager {
             this.shotsFired++;
         });
 
-        window.addEventListener('hitMarker', () => {
-            this.shotsHit++;
+        window.addEventListener('hitMarker', (e) => {
+            if (e.detail && e.detail.type !== 'wall') {
+                this.shotsHit++;
+            }
         });
     }
 

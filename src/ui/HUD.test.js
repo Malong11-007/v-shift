@@ -65,7 +65,7 @@ describe('HUD Integration', () => {
 
     it('should update ammo text from active weapon', () => {
         // Need to dispatch an ammo event since HUD uses listeners for ammo
-        window.dispatchEvent(new CustomEvent('ammoChanged', { detail: { current: 12, max: 30 } }));
+        window.dispatchEvent(new CustomEvent('weaponAmmoSync', { detail: { current: 12, max: 30 } }));
         
         const ammoEl = document.getElementById('hud-ammo-value');
         expect(ammoEl.innerText).toBe('12 / 30');

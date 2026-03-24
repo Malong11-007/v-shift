@@ -8,6 +8,7 @@ import BulletTracer from '../game/BulletTracer.js';
 import * as THREE from 'three';
 import networkManager from '../net/NetworkManager.js';
 import { MSG } from '../net/NetMessages.js';
+import RemotePlayer from './RemotePlayer.js';
 
 export default class WeaponSystem {
     constructor(player) {
@@ -141,13 +142,12 @@ export default class WeaponSystem {
         this.camera.getWorldPosition(origin);
         
         const excludeCol = this.player.collider || null;
-        // Fixed cone pattern for 8 pellets
+        // Fixed cone pattern matching weapon pellet count
         const angles = [
-            [0,0], [0.02,0], [-0.02,0], [0,0.02], [0,-0.02], [0.015,0.015], [-0.015,0.015], [0.015,-0.015], [-0.015,-0.015]
+            [0,0], [0.02,0], [-0.02,0], [0,0.02], [0,-0.02], [0.015,0.015], [-0.015,0.015], [0.015,-0.015]
         ];
 
-        // Ensure we only fire 8 pellets (0 to 7)
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < angles.length; i++) {
             const spreadQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(angles[i][1], angles[i][0], 0));
             const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion).applyQuaternion(spreadQuat);
             
@@ -164,14 +164,45 @@ export default class WeaponSystem {
         const direction = new THREE.Vector3();
         this.camera.getWorldDirection(direction);
 
-        const hitResult = collision.castRay({ x: origin.x, y: origin.y, z: origin.z }, { x: direction.x, y: direction.y, z: direction.z }, this.currentWeapon.range);
+        const excludeCol = this.player.collider || null;
+        const hitResult = collision.castRay({ x: origin.x, y: origin.y, z: origin.z }, { x: direction.x, y: direction.y, z: direction.z }, this.currentWeapon.range, excludeCol);
         
         if (hitResult) {
-            // Simplified: everything is a front slash right now
+            // Check if we hit an entity
+            if (hitResult.collider) {
+                const entity = collision.colliderMap.get(hitResult.collider.handle);
+                if (entity && entity.takeDamage) {
+                    const damage = this.currentWeapon.damage.slash;
+                    const oldHealth = entity.health;
+                    entity.takeDamage(damage, false, {
+                        weaponId: this.currentWeapon.id,
+                        hitDirection: direction
+                    });
+                    console.log(`Melee hit entity for ${damage} damage`);
+                    window.dispatchEvent(new CustomEvent('hitMarker', { detail: { type: 'body', damage } }));
+
+                    // Dispatch kill event if fatal
+                    if (oldHealth > 0 && entity.health <= 0) {
+                        const ke = this.player.kineticEngine;
+                        window.dispatchEvent(new CustomEvent('playerKilled', {
+                            detail: {
+                                weaponId: this.currentWeapon.id,
+                                isHeadshot: false,
+                                victimId: entity.id || 'Unknown',
+                                killerIsLocal: true,
+                                killerSliding: ke.isSliding,
+                                killerAirborne: !ke.isGrounded,
+                                bhopChain: ke.consecutiveJumps
+                            }
+                        }));
+                    }
+                    return;
+                }
+            }
+            // Hit geometry, not an entity
             const damage = this.currentWeapon.damage.slash;
-            console.log(`Melee hit for ${damage} damage`);
-            // Fire event for UI feedback
-            window.dispatchEvent(new CustomEvent('hitMarker', { detail: { type: 'body', damage } }));
+            console.log(`Melee hit geometry for ${damage} damage`);
+            window.dispatchEvent(new CustomEvent('hitMarker', { detail: { type: 'wall', damage: 0 } }));
         }
     }
 

@@ -66,7 +66,12 @@ class RoundManager {
                 } else if (this.state === ROUND_STATES.POST_ROUND) {
                     // Start next round
                     this.currentRound++;
-                    // Check half time or match end logic here...
+                    if (this.currentRound > this.maxRounds) {
+                        // Match over
+                        console.log('[RoundManager] Match complete.');
+                        window.dispatchEvent(new CustomEvent('matchEnded', { detail: { finalRound: this.currentRound - 1 } }));
+                        return;
+                    }
                     this.startRound();
                 }
             }

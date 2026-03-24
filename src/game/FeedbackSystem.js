@@ -114,7 +114,9 @@ class FeedbackSystem {
         flash.style.opacity = '1';
         flash.style.transition = `opacity ${durationMs}ms ease-out`;
         
-        document.getElementById('ui-root').appendChild(flash);
+        const uiRoot = document.getElementById('ui-root');
+        if (!uiRoot) return;
+        uiRoot.appendChild(flash);
         
         // Next frame, fade out
         requestAnimationFrame(() => {

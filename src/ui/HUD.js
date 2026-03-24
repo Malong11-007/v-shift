@@ -187,7 +187,7 @@ class HUD {
             if (el) el.innerText = Math.ceil(e.detail);
         });
         
-        window.addEventListener('ammoChanged', (e) => {
+        window.addEventListener('weaponAmmoSync', (e) => {
             const el = document.getElementById('hud-ammo-value');
             if (el) el.innerText = `${e.detail.current} / ${e.detail.max}`;
         });
