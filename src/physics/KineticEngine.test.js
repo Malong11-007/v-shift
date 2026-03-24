@@ -126,4 +126,19 @@ describe('KineticEngine', () => {
         expect(speedEvent).toBeDefined();
         expect(speedEvent[0].detail.speed).toBeDefined();
     });
+
+    it('should apply momentum surge boost to acceleration', () => {
+        kineticEngine.setGrounded(true);
+        vi.spyOn(input, 'isKeyDown').mockImplementation((code) => code === 'KeyW');
+        const eventSpy = vi.spyOn(window, 'dispatchEvent');
+
+        window.dispatchEvent(new CustomEvent('momentumSurge', { detail: { multiplier: 1.5, duration: 1 } }));
+        kineticEngine.update(0.1);
+
+        const vel = mockBody.linvel();
+        expect(vel.z).toBeCloseTo(-18, 1);
+
+        const surgeUpdate = eventSpy.mock.calls.find(call => call[0].type === 'momentumSurgeUpdate');
+        expect(surgeUpdate).toBeDefined();
+    });
 });
