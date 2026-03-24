@@ -18,6 +18,9 @@ export default class KineticEngine {
         this.friction = 10.0;       // ground friction when not pressing keys
         this.airAcceleration = 20.0; // slower acceleration in air
         this.jumpForce = 12.0;      // snappy jump height
+        this.surgeMultiplier = 1.0;
+        this.surgeDuration = 0;
+        this.surgeRemaining = 0;
         
         // B-hop tracking
         this.lastGroundedTime = 0;
@@ -36,6 +39,7 @@ export default class KineticEngine {
         
         // Bind custom events
         window.addEventListener('onJump', this.handleJump.bind(this));
+        window.addEventListener('momentumSurge', (e) => this.startSurge(e.detail));
     }
 
     setGrounded(isGrounded) {
@@ -83,8 +87,28 @@ export default class KineticEngine {
         }
     }
 
+    startSurge(detail = {}) {
+        const multiplier = Math.max(1, detail.multiplier || 1.2);
+        const duration = Math.max(0.5, detail.duration || 3);
+        this.surgeMultiplier = multiplier;
+        this.surgeDuration = duration;
+        this.surgeRemaining = duration;
+
+        window.dispatchEvent(new CustomEvent('momentumSurgeUpdate', {
+            detail: {
+                active: true,
+                remaining: this.surgeRemaining,
+                duration: this.surgeDuration,
+                multiplier: this.surgeMultiplier
+            }
+        }));
+    }
+
     update(delta) {
         if (!this.body) return;
+
+        const surgeActive = this.surgeRemaining > 0;
+        const speedBoost = surgeActive ? this.surgeMultiplier : 1;
 
         // 1. Calculate input vector relative to camera yaw
         let ix = 0;
@@ -129,11 +153,12 @@ export default class KineticEngine {
             if (this.inputVector.lengthSq() > 0) {
                 // Accelerating
                 const speed = this.velocity.length();
-                if (speed < this.maxSpeed) {
-                    this.velocity.addScaledVector(moveDir, this.acceleration * delta);
+                const effectiveMax = this.maxSpeed * speedBoost;
+                if (speed < effectiveMax) {
+                    this.velocity.addScaledVector(moveDir, this.acceleration * speedBoost * delta);
                     // clamp
-                    if (this.velocity.length() > this.maxSpeed) {
-                        this.velocity.normalize().multiplyScalar(this.maxSpeed);
+                    if (this.velocity.length() > effectiveMax) {
+                        this.velocity.normalize().multiplyScalar(effectiveMax);
                     }
                 }
             } else {
@@ -148,12 +173,13 @@ export default class KineticEngine {
         } else if (!this.isGrounded) {
             // Air Strafing (Quake-style)
             const projectedVel = this.velocity.dot(moveDir);
-            let accelMag = this.airAcceleration * delta;
+            const effectiveMax = this.maxSpeed * speedBoost;
+            let accelMag = this.airAcceleration * speedBoost * delta;
             
             // Limit air acceleration so we don't exceed max speed just by holding W
             // But if we're turning (strafing), it allows building velocity.
-            if (projectedVel + accelMag > this.maxSpeed) {
-                accelMag = Math.max(this.maxSpeed - projectedVel, 0);
+            if (projectedVel + accelMag > effectiveMax) {
+                accelMag = Math.max(effectiveMax - projectedVel, 0);
             }
             
             this.velocity.addScaledVector(moveDir, accelMag);
@@ -171,5 +197,20 @@ export default class KineticEngine {
         window.dispatchEvent(new CustomEvent('playerSpeedUpdate', { 
             detail: { speed, bhopChain: this.consecutiveJumps } 
         }));
+
+        if (surgeActive) {
+            this.surgeRemaining = Math.max(0, this.surgeRemaining - delta);
+            window.dispatchEvent(new CustomEvent('momentumSurgeUpdate', {
+                detail: {
+                    active: this.surgeRemaining > 0,
+                    remaining: this.surgeRemaining,
+                    duration: this.surgeDuration,
+                    multiplier: this.surgeMultiplier
+                }
+            }));
+            if (this.surgeRemaining === 0) {
+                window.dispatchEvent(new Event('momentumSurgeExpired'));
+            }
+        }
     }
 }

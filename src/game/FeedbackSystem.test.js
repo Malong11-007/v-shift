@@ -131,4 +131,15 @@ describe('FeedbackSystem', () => {
         }));
         expect(labelSpy).toHaveBeenCalledWith(expect.stringContaining('SPEED DEMON'), '#00ffaa', 30, 0, 150);
     });
+
+    it('should trigger momentum surge for double kill', () => {
+        const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+        
+        window.dispatchEvent(new CustomEvent('playerKilled', { detail: { killerIsLocal: true } }));
+        window.dispatchEvent(new CustomEvent('playerKilled', { detail: { killerIsLocal: true } }));
+
+        const surgeEvent = dispatchSpy.mock.calls.find(call => call[0].type === 'momentumSurge');
+        expect(surgeEvent).toBeDefined();
+        expect(surgeEvent[0].detail.multiplier).toBeGreaterThan(1);
+    });
 });

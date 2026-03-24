@@ -29,6 +29,7 @@ class FeedbackSystem {
             
             const killCount = this.recentKills.length;
             this.announceMultiKill(killCount);
+            this.triggerMomentumSurge(killCount, data);
 
             if (data.isFirstBlood) {
                 this.showLabel('FIRST BLOOD', '#ff3333', 50);
@@ -54,6 +55,30 @@ class FeedbackSystem {
                 }
             }
         });
+    }
+
+    triggerMomentumSurge(killCount, data) {
+        if (!data.killerIsLocal) return;
+        const styleKill = data.killerSliding || data.killerAirborne || (data.bhopChain || 0) >= 4;
+        const streakKill = killCount >= 2;
+        if (!styleKill && !streakKill) return;
+
+        const baseBoost = 1.2;
+        const streakBonus = Math.min(Math.max(killCount - 1, 0) * 0.1, 0.3);
+        const styleBonus = (data.killerSliding ? 0.05 : 0) + (data.killerAirborne ? 0.05 : 0);
+        const multiplier = Number((baseBoost + streakBonus + styleBonus).toFixed(2));
+
+        window.dispatchEvent(new CustomEvent('momentumSurge', {
+            detail: {
+                multiplier,
+                duration: 4,
+                source: styleKill ? 'STYLE' : 'CHAIN'
+            }
+        }));
+
+        this.showLabel('MOMENTUM SURGE', '#00ffaa', 42, 0, -160);
+        this.screenFlash('rgba(0, 255, 170, 0.2)', 250);
+        audioManager.playSyntheticSfx('bhop_success');
     }
 
     announceMultiKill(count) {

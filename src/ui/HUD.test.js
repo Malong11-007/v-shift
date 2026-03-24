@@ -78,4 +78,19 @@ describe('HUD Integration', () => {
         // hit marker should become visible
         expect(hud.hitMarker.style.opacity).toBe('1');
     });
+
+    it('should render surge meter updates', () => {
+        window.dispatchEvent(new CustomEvent('momentumSurgeUpdate', { detail: { active: true, remaining: 3, duration: 4, multiplier: 1.3 } }));
+        
+        const surge = document.getElementById('hud-surge');
+        const fill = document.getElementById('hud-surge-fill');
+        const label = document.getElementById('hud-surge-label');
+
+        expect(surge.style.display).toBe('flex');
+        expect(label.innerText).toContain('x1.30');
+        expect(parseFloat(fill.style.width)).toBeGreaterThan(0);
+
+        window.dispatchEvent(new CustomEvent('momentumSurgeExpired'));
+        expect(surge.style.display).toBe('none');
+    });
 });

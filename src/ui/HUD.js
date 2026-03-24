@@ -41,6 +41,10 @@ class HUD {
         this.applyKillFeedStyles(this.killFeed);
         this.container.appendChild(this.killFeed);
 
+        // 7. Momentum Surge Meter (Bottom Center)
+        this.surgeMeter = this.createSurgeMeter();
+        this.container.appendChild(this.surgeMeter);
+
         document.body.appendChild(this.container);
         
         this.initEventListeners();
@@ -141,6 +145,61 @@ class HUD {
         });
     }
 
+    createSurgeMeter() {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'hud-surge';
+        Object.assign(wrapper.style, {
+            position: 'absolute',
+            bottom: '32px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '280px',
+            display: 'none',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '6px',
+            pointerEvents: 'none'
+        });
+
+        const label = document.createElement('div');
+        label.id = 'hud-surge-label';
+        Object.assign(label.style, {
+            fontSize: '14px',
+            letterSpacing: '3px',
+            fontWeight: '800',
+            color: '#00ffaa',
+            textShadow: '0 0 12px rgba(0, 255, 170, 0.7)'
+        });
+        label.innerText = 'SURGE READY';
+
+        const bar = document.createElement('div');
+        bar.id = 'hud-surge-bar';
+        Object.assign(bar.style, {
+            width: '100%',
+            height: '10px',
+            background: 'rgba(0,0,0,0.45)',
+            borderRadius: '999px',
+            overflow: 'hidden',
+            border: '1px solid rgba(0,255,170,0.4)',
+            boxShadow: '0 0 18px rgba(0,255,170,0.3)'
+        });
+
+        const fill = document.createElement('div');
+        fill.id = 'hud-surge-fill';
+        Object.assign(fill.style, {
+            width: '0%',
+            height: '100%',
+            background: 'linear-gradient(90deg, #00ffaa, #57fff3)',
+            boxShadow: '0 0 20px rgba(0,255,170,0.7)',
+            transition: 'width 0.15s ease-out'
+        });
+
+        bar.appendChild(fill);
+        wrapper.appendChild(label);
+        wrapper.appendChild(bar);
+        return wrapper;
+    }
+
     update(player, dt) {
         if (gameState.currentState !== STATES.PLAYING) {
             this.hide();
@@ -201,10 +260,41 @@ class HUD {
             const killerName = d.killerIsLocal ? 'YOU' : 'OPERATOR';
             this.addKillEntry(killerName, d.victimId, d.weaponId);
         });
+
+        window.addEventListener('momentumSurgeUpdate', (e) => this.renderSurgeMeter(e.detail));
+        window.addEventListener('momentumSurgeExpired', () => this.hideSurgeMeter());
     }
 
     show() { this.container.style.display = 'block'; }
     hide() { this.container.style.display = 'none'; }
+
+    renderSurgeMeter(detail) {
+        const wrapper = document.getElementById('hud-surge');
+        const label = document.getElementById('hud-surge-label');
+        const fill = document.getElementById('hud-surge-fill');
+        if (!wrapper || !label || !fill) return;
+
+        const pct = Math.max(0, Math.min(1, (detail.remaining || 0) / (detail.duration || 1)));
+        fill.style.width = `${(pct * 100).toFixed(1)}%`;
+
+        if (detail.active) {
+            wrapper.style.display = 'flex';
+            label.innerText = `SURGE x${detail.multiplier.toFixed(2)}`;
+            fill.style.opacity = '1';
+        } else if (detail.remaining === 0) {
+            this.hideSurgeMeter();
+        }
+    }
+
+    hideSurgeMeter() {
+        const wrapper = document.getElementById('hud-surge');
+        const fill = document.getElementById('hud-surge-fill');
+        const label = document.getElementById('hud-surge-label');
+        if (!wrapper || !fill || !label) return;
+        wrapper.style.display = 'none';
+        fill.style.width = '0%';
+        label.innerText = 'SURGE READY';
+    }
 }
 
 export default new HUD();
