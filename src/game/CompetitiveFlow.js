@@ -131,8 +131,9 @@ export class CompetitiveFlow {
 
         if (attackersAlive === 0) {
             this.endRound(TEAMS.DEFENDERS, ROUND_RESULT.ATTACKERS_ELIMINATED);
-        } else if (defendersAlive === 0 && this.spikeTimer === null) {
-            // If spike is planted, defenders could still defuse; when not planted, attackers win instantly.
+        } else if (defendersAlive === 0) {
+            // All defenders eliminated — attackers win regardless of spike state
+            // (no one left to defuse)
             this.endRound(TEAMS.ATTACKERS, ROUND_RESULT.DEFENDERS_ELIMINATED);
         }
     }

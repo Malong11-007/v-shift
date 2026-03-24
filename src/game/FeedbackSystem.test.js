@@ -100,4 +100,35 @@ describe('FeedbackSystem', () => {
         }));
         expect(labelSpy).toHaveBeenCalledWith('AIRSHOT', '#ff00ff', 40, -200);
     });
+
+    it('should not crash screenFlash when ui-root is missing', () => {
+        // Remove ui-root from DOM
+        const root = document.getElementById('ui-root');
+        if (root) root.remove();
+
+        // Should not throw
+        expect(() => feedbackSystem.screenFlash('white', 100)).not.toThrow();
+    });
+
+    it('should create flash overlay when ui-root exists', () => {
+        feedbackSystem.screenFlash('red', 100);
+        const flashElements = uiRoot.querySelectorAll('div');
+        expect(flashElements.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should show bhop chain label for 3+ chain', () => {
+        const labelSpy = vi.spyOn(feedbackSystem, 'showLabel');
+        window.dispatchEvent(new CustomEvent('playerKilled', {
+            detail: { killerIsLocal: true, bhopChain: 3 }
+        }));
+        expect(labelSpy).toHaveBeenCalledWith(expect.stringContaining('x3 PERFECT CHAIN'), '#00ffaa', 30, 0, 150);
+    });
+
+    it('should show speed demon text for 5+ bhop chain', () => {
+        const labelSpy = vi.spyOn(feedbackSystem, 'showLabel');
+        window.dispatchEvent(new CustomEvent('playerKilled', {
+            detail: { killerIsLocal: true, bhopChain: 5 }
+        }));
+        expect(labelSpy).toHaveBeenCalledWith(expect.stringContaining('SPEED DEMON'), '#00ffaa', 30, 0, 150);
+    });
 });
