@@ -79,4 +79,69 @@ describe('CompetitiveFlow', () => {
         expect(endSpy).toHaveBeenCalledWith(TEAMS.DEFENDERS, ROUND_RESULT.SPIKE_DEFUSED);
         expect(roundManager.state).toBe(ROUND_STATES.POST_ROUND);
     });
+
+    it('ends round when all defenders are eliminated even with spike planted (no softlock)', () => {
+        flow.configureTeams({ attackers: 2, defenders: 1 });
+        flow.activate();
+        roundManager.transition(ROUND_STATES.LIVE);
+        const endSpy = vi.spyOn(roundManager, 'endRound');
+
+        // Plant spike first
+        flow.onSpikePlanted({ detail: { fuseTime: 40 } });
+        expect(flow.spikeTimer).toBe(40);
+
+        // Kill last defender — should end round immediately for attackers
+        window.dispatchEvent(new CustomEvent('playerKilled', { detail: { victimTeam: TEAMS.DEFENDERS } }));
+
+        expect(endSpy).toHaveBeenCalledWith(TEAMS.ATTACKERS, ROUND_RESULT.DEFENDERS_ELIMINATED);
+        expect(roundManager.state).toBe(ROUND_STATES.POST_ROUND);
+    });
+
+    it('does not end round when inactive', () => {
+        // Do NOT activate flow
+        roundManager.transition(ROUND_STATES.LIVE);
+        const endSpy = vi.spyOn(roundManager, 'endRound');
+
+        flow.onPlayerKilled({ detail: { victimTeam: TEAMS.ATTACKERS } });
+
+        expect(endSpy).not.toHaveBeenCalled();
+    });
+
+    it('resets alive counts on new freeze time', () => {
+        flow.configureTeams({ attackers: 3, defenders: 3 });
+        flow.activate();
+        roundManager.transition(ROUND_STATES.LIVE);
+
+        // Kill some players
+        flow.onPlayerKilled({ detail: { victimTeam: TEAMS.ATTACKERS } });
+        expect(flow.alive[TEAMS.ATTACKERS]).toBe(2);
+
+        // New round starts
+        roundManager.transition(ROUND_STATES.FREEZE_TIME);
+        expect(flow.alive[TEAMS.ATTACKERS]).toBe(3);
+        expect(flow.alive[TEAMS.DEFENDERS]).toBe(3);
+    });
+
+    it('ignores spike defuse/detonate when no spike is planted', () => {
+        flow.activate();
+        roundManager.transition(ROUND_STATES.LIVE);
+        const endSpy = vi.spyOn(roundManager, 'endRound');
+
+        flow.onSpikeDefused();
+        expect(endSpy).not.toHaveBeenCalled();
+
+        flow.onSpikeDetonated();
+        expect(endSpy).not.toHaveBeenCalled();
+    });
+
+    it('spike timer extends round timer when planted', () => {
+        flow.activate();
+        roundManager.transition(ROUND_STATES.LIVE);
+        roundManager.timer = 10; // Only 10 seconds left
+
+        flow.onSpikePlanted({ detail: { fuseTime: 40 } });
+
+        // Round timer should be extended to at least the fuse time
+        expect(roundManager.timer).toBeGreaterThanOrEqual(40);
+    });
 });

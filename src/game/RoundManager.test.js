@@ -98,4 +98,35 @@ describe('RoundManager', () => {
         expect(roundManager.currentRound).toBe(4); // Increment round
         expect(spy).toHaveBeenCalled();
     });
+
+    it('should fire matchEnded and stop when exceeding maxRounds', () => {
+        const spy = vi.spyOn(window, 'dispatchEvent');
+        const startSpy = vi.spyOn(roundManager, 'startRound');
+        roundManager.state = ROUND_STATES.POST_ROUND;
+        roundManager.timer = 1;
+        roundManager.currentRound = 13; // Last round
+        roundManager.maxRounds = 13;
+
+        roundManager.update(1.1); // Exceed timer
+
+        expect(roundManager.currentRound).toBe(14); // Incremented past max
+
+        const matchEndedEvent = spy.mock.calls.find(call => call[0].type === 'matchEnded');
+        expect(matchEndedEvent).toBeDefined();
+        expect(matchEndedEvent[0].detail.finalRound).toBe(13);
+        expect(startSpy).not.toHaveBeenCalled(); // Should not start new round
+    });
+
+    it('should not fire matchEnded for mid-game rounds', () => {
+        const spy = vi.spyOn(window, 'dispatchEvent');
+        roundManager.state = ROUND_STATES.POST_ROUND;
+        roundManager.timer = 1;
+        roundManager.currentRound = 6;
+        roundManager.maxRounds = 13;
+
+        roundManager.update(1.1);
+
+        const matchEndedEvent = spy.mock.calls.find(call => call[0].type === 'matchEnded');
+        expect(matchEndedEvent).toBeUndefined();
+    });
 });
