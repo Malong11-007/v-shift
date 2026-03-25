@@ -20,7 +20,7 @@ import hud from './ui/HUD.js';
 import uiManager from './ui/UIManager.js';
 import tutorial from './ui/Tutorial.js';
 import feedbackSystem from './game/FeedbackSystem.js';
-import Bot from './entities/Bot.js';
+import Bot, { BOT_TEAMS } from './entities/Bot.js';
 import * as THREE from 'three';
 
 console.log('V-SHIFT Initializing...');
@@ -88,11 +88,23 @@ const init = async () => {
         const teamSize = Math.min(Math.max(1, parseInt(urlParams.get('team')) || 5), 10);
         competitiveFlow.configureTeams({ attackers: teamSize, defenders: teamSize });
 
-        // Spawn bots based on configured defender team size
-        const botSpawns = arena.getBotSpawns(teamSize);
-        window.bots = botSpawns.map((pos, i) =>
-            new Bot(`bot_${i + 1}`, pos)
-        );
+        // Spawn bots on both teams for full 5v5 gameplay
+        const defenderSpawns = arena.getBotSpawns(teamSize);
+        const attackerSpawns = arena.getPlayerSpawns(teamSize - 1); // -1 because player is on attacker team
+
+        window.bots = [];
+
+        // Spawn defender bots (enemy team)
+        defenderSpawns.forEach((pos, i) => {
+            window.bots.push(new Bot(`bot_defender_${i + 1}`, pos, BOT_TEAMS.DEFENDERS));
+        });
+
+        // Spawn attacker bots (friendly team with player)
+        attackerSpawns.forEach((pos, i) => {
+            window.bots.push(new Bot(`bot_attacker_${i + 1}`, pos, BOT_TEAMS.ATTACKERS));
+        });
+
+        console.log(`[main.js] Spawned ${teamSize} defenders and ${teamSize - 1} attackers (+ player)`);
         // Don't transition here yet, wait for assets to load fully.
     }
     window.bots.forEach(bot => engine.addUpdatable(bot));

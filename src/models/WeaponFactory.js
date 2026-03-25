@@ -728,7 +728,14 @@ class WeaponFactory {
     // ========================================================
     static createKnife() {
         const group = new THREE.Group();
-        const chrome = this._chrome();
+        // Use less reflective materials for knife to prevent black screen issue
+        const chrome = new THREE.MeshStandardMaterial({
+            color: 0xcccccc,
+            metalness: 0.7,
+            roughness: 0.15,
+            transparent: true,
+            opacity: 1.0
+        });
         const carbon = this._rubber();
         const dark = this._metalDark();
 
@@ -799,6 +806,17 @@ class WeaponFactory {
             rightHand: { pos: new THREE.Vector3(0, -0.015, -0.06) },
             leftHand: null // Single handed
         };
+
+        // Ensure all knife meshes have proper material settings for viewmodel rendering
+        group.traverse(child => {
+            if (child.isMesh && child.material) {
+                child.material.transparent = true;
+                child.material.opacity = 1.0;
+                child.castShadow = false;
+                child.receiveShadow = false;
+            }
+        });
+
         return group;
     }
 }

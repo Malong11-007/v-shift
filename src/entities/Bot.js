@@ -18,9 +18,15 @@ export const BOT_STATES = {
     DEAD: 'DEAD'
 };
 
+export const BOT_TEAMS = {
+    ATTACKERS: 'ATTACKERS',
+    DEFENDERS: 'DEFENDERS'
+};
+
 export default class Bot {
-    constructor(id, startPos) {
+    constructor(id, startPos, team = BOT_TEAMS.DEFENDERS) {
         this.id = id;
+        this.team = team;
         this.state = BOT_STATES.PATROL;
         this.health = 100;
         this.speed = 3.0; // Slower than player
@@ -100,28 +106,30 @@ export default class Bot {
 
     async initVisuals() {
         try {
-            // 1. Create the procedural character
-            this.character = new CharacterModel(0x3366aa); // Blue team
+            // 1. Create the procedural character with team color
+            const teamColor = this.team === BOT_TEAMS.ATTACKERS ? 0xaa3333 : 0x3366aa; // Red for attackers, blue for defenders
+            this.character = new CharacterModel(teamColor);
             this.mesh = this.character.root;
             this.mesh.scale.set(1.3, 1.3, 1.3);
             this.group.add(this.mesh);
-            
+
             // 2. Setup the animator
             this.animator = new ProceduralAnimator(this.character);
-            
+
             // 3. Attach a weapon
             this.weapon = WeaponFactory.createWeapon('V44SABRE');
             this.character.weaponMount.add(this.weapon);
             this.animator.setWeaponPose('RIFLE');
-            
-            console.log(`[Bot ${this.id}] Procedural character initialized.`);
+
+            console.log(`[Bot ${this.id}] Procedural character initialized for team ${this.team}.`);
         } catch (e) {
             console.error(`[Bot ${this.id}] FATAL ERROR initializing procedural visuals:`, e);
-            // Fallback capsule
+            // Fallback capsule with team color
+            const teamColor = this.team === BOT_TEAMS.ATTACKERS ? 0xaa3333 : 0x3366aa;
             const geo = new THREE.CapsuleGeometry(0.5, 1, 4, 8);
-            const mat = new THREE.MeshStandardMaterial({ color: 0xcc2222 });
+            const mat = new THREE.MeshStandardMaterial({ color: teamColor });
             this.mesh = new THREE.Mesh(geo, mat);
-            this.mesh.position.y = 1.0; 
+            this.mesh.position.y = 1.0;
             this.mesh.castShadow = true;
             this.mesh.receiveShadow = true;
             this.group.add(this.mesh);
@@ -285,92 +293,106 @@ export default class Bot {
         // Don't run AI unless the game is actively being played
         if (gameState.currentState !== STATES.PLAYING) return;
         if (roundManager.state !== ROUND_STATES.LIVE) return;
-        
+
         if (!this.strafeTimer) this.strafeTimer = 0;
         this.strafeTimer += dt;
 
-        // Very crude AI logic
-        if (!window.localPlayer || !window.localPlayer.isAlive) {
+        // Find targets: player or enemy bots
+        const targets = this.findTargets();
+        if (targets.length === 0) {
             this.state = BOT_STATES.PATROL;
             this.playerTarget = null;
             return;
         }
 
-        const playerPos = engine.camera.position;
-        const distToPlayer = this.group.position.distanceTo(playerPos);
-        
-        // PERFORMANCE OPTIMIZATION (16.8): Skip expensive AI logic if player is too far
-        if (distToPlayer > 35) {
+        // Choose closest target
+        let closestTarget = null;
+        let closestDist = Infinity;
+
+        for (const target of targets) {
+            const dist = this.group.position.distanceTo(target.position);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestTarget = target;
+            }
+        }
+
+        if (!closestTarget) {
+            this.state = BOT_STATES.PATROL;
+            this.playerTarget = null;
+            return;
+        }
+
+        // PERFORMANCE OPTIMIZATION: Skip expensive AI logic if target is too far
+        if (closestDist > 35) {
             this.state = BOT_STATES.PATROL;
             return;
         }
 
         let hasLineOfSight = false;
-        
-        if (distToPlayer < 25) {
+
+        if (closestDist < 25) {
             // Check Line of Sight
-            const dirToPlayer = new THREE.Vector3().subVectors(playerPos, this.group.position).normalize();
-            // Cast ray to player. If it hits something closer than the player, LOS is blocked.
-            // We'll use collision.js if available
+            const dirToTarget = new THREE.Vector3().subVectors(closestTarget.position, this.group.position).normalize();
             const rayStart = { x: this.group.position.x, y: this.group.position.y + 0.5, z: this.group.position.z };
-            const rayDir = { x: dirToPlayer.x, y: dirToPlayer.y, z: dirToPlayer.z };
-            
-            const hit = collision.castRay(rayStart, rayDir, distToPlayer);
-            // If it hits a wall, `hit.collider` won't map to the player entity (because Player doesn't have a collider registered in colliderMap yet).
-            // Actually, if it hits anything closer than 90% of the distance to the player, assume blocked.
-            if (hit && this.group.position.distanceTo(hit.point) < distToPlayer - 1.5) {
+            const rayDir = { x: dirToTarget.x, y: dirToTarget.y, z: dirToTarget.z };
+
+            const hit = collision.castRay(rayStart, rayDir, closestDist);
+            if (hit && this.group.position.distanceTo(hit.point) < closestDist - 1.5) {
                 hasLineOfSight = false;
             } else {
                 hasLineOfSight = true;
             }
         }
-        
+
         if (hasLineOfSight) {
             this.state = BOT_STATES.ATTACK;
-            this.playerTarget = playerPos;
+            this.playerTarget = closestTarget.position;
+            this.currentTarget = closestTarget;
         } else {
             this.state = BOT_STATES.PATROL;
             this.playerTarget = null;
+            this.currentTarget = null;
         }
 
         // Apply velocities based on state
         const vel = { x: 0, y: this.body.linvel().y, z: 0 };
-        
+
         if (this.state === BOT_STATES.ATTACK && this.playerTarget) {
-            // Look at player
+            // Look at target
             const lookTarget = new THREE.Vector3(this.playerTarget.x, this.group.position.y, this.playerTarget.z);
             this.group.lookAt(lookTarget);
-            
-            // Move toward player + Strafe
+
+            // Move toward target + Strafe
             const dir = new THREE.Vector3().subVectors(this.playerTarget, this.group.position);
             dir.y = 0;
             dir.normalize();
 
             const right = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), dir).normalize();
             const strafeDir = Math.sin(this.strafeTimer * 2) > 0 ? 1 : -1;
-            
+
             // Combination of closing distance and strafing
-            if (distToPlayer > 12) {
+            if (closestDist > 12) {
                 vel.x = (dir.x * 0.7 + right.x * strafeDir * 0.3) * this.speed;
                 vel.z = (dir.z * 0.7 + right.z * strafeDir * 0.3) * this.speed;
-            } else if (distToPlayer < 6) {
+            } else if (closestDist < 6) {
                 vel.x = (-dir.x * 0.5 + right.x * strafeDir * 0.5) * this.speed;
                 vel.z = (-dir.z * 0.5 + right.z * strafeDir * 0.5) * this.speed;
             } else {
                 vel.x = (right.x * strafeDir) * this.speed * 0.8;
                 vel.z = (right.z * strafeDir) * this.speed * 0.8;
             }
-            
+
             // Shoot logic
             if (performance.now() >= this.spawnProtectionUntil && performance.now() - this.lastShotTime > this.fireRate) {
-                this.shoot(distToPlayer);
+                this.shoot(closestDist);
                 this.lastShotTime = performance.now();
                 this.fireRate = 500 + Math.random() * 500;
             }
         }
-        
+
         this.body.setLinvel(vel, true);
-        
+
         // Update Animation State
         if (this.animator) {
             const speedSq = vel.x * vel.x + vel.z * vel.z;
@@ -384,25 +406,76 @@ export default class Bot {
             this.animator.update(dt);
         }
     }
+
+    findTargets() {
+        const targets = [];
+
+        // Check if player is alive and is an enemy
+        if (window.localPlayer && window.localPlayer.isAlive) {
+            // Player is on attacker team (opposite of defenders)
+            const playerTeam = BOT_TEAMS.ATTACKERS;
+            if (this.team !== playerTeam) {
+                targets.push({
+                    position: engine.camera.position,
+                    entity: window.localPlayer,
+                    type: 'player'
+                });
+            }
+        }
+
+        // Check all other bots
+        if (window.bots) {
+            for (const bot of window.bots) {
+                if (bot === this) continue;
+                if (bot.state === BOT_STATES.DEAD) continue;
+                if (bot.team === this.team) continue; // Don't target teammates
+
+                targets.push({
+                    position: bot.group.position,
+                    entity: bot,
+                    type: 'bot'
+                });
+            }
+        }
+
+        return targets;
+    }
     
-    shoot(distToPlayer) {
+    shoot(distToTarget) {
         audioManager.playSyntheticSfx('shoot_rifle');
-        
+
         // Distance-based accuracy: closer = more accurate
-        // Base 35% at 20m, up to 50% at 5m, down to 15% at 25m
         const basePct = 0.35;
-        const distFactor = Math.max(0, 1 - (distToPlayer / 25));
+        const distFactor = Math.max(0, 1 - (distToTarget / 25));
         const hitChance = 0.15 + (basePct * distFactor);
-        
+
         if (Math.random() < hitChance) {
-            // Hit! Deal damage to player
+            // Hit! Deal damage
             const damage = 12 + Math.floor(Math.random() * 8); // 12-20 damage per hit
-            window.dispatchEvent(new CustomEvent('playerTakeDamage', { 
-                detail: { 
-                    amount: damage,
-                    killerPos: this.group.position.clone()
-                } 
-            }));
+
+            if (this.currentTarget) {
+                if (this.currentTarget.type === 'player') {
+                    // Damage player
+                    window.dispatchEvent(new CustomEvent('playerTakeDamage', {
+                        detail: {
+                            amount: damage,
+                            killerPos: this.group.position.clone()
+                        }
+                    }));
+                } else if (this.currentTarget.type === 'bot') {
+                    // Damage other bot
+                    const targetBot = this.currentTarget.entity;
+                    if (targetBot && targetBot.takeDamage) {
+                        const hitDirection = new THREE.Vector3()
+                            .subVectors(targetBot.group.position, this.group.position)
+                            .normalize();
+                        targetBot.takeDamage(damage, false, {
+                            weaponId: 'V44SABRE',
+                            hitDirection: hitDirection
+                        });
+                    }
+                }
+            }
         }
     }
 }
