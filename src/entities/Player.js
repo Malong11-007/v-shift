@@ -146,6 +146,9 @@ export default class Player {
     die() {
         this.isAlive = false;
         
+        // Unscope if scoped
+        if (this.weaponSystem.isScoped) this.weaponSystem.unscope();
+        
         // Drop physics body
         this.body.setTranslation({ x: -1000, y: -1000, z: -1000 }, true);
         
@@ -290,9 +293,12 @@ export default class Player {
         // 1. Mouse Look (includes gamepad + touch look)
         const mouseDelta = input.getMouseDelta();
         if (input.isInputActive()) {
-            // Increased sensitivity for snappier feel
-            this.yaw -= mouseDelta.x * this.sensitivity * 0.002;
-            this.pitch -= mouseDelta.y * this.sensitivity * 0.002;
+            // Reduce sensitivity while scoped for precision aiming
+            const scopeMod = this.weaponSystem.isScoped
+                ? this.weaponSystem.currentWeapon.scope.sensitivityMultiplier
+                : 1;
+            this.yaw -= mouseDelta.x * this.sensitivity * scopeMod * 0.002;
+            this.pitch -= mouseDelta.y * this.sensitivity * scopeMod * 0.002;
 
             // Clamp pitch to ±89 degrees
             const maxPitch = Math.PI / 2 - 0.01;

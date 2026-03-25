@@ -54,4 +54,17 @@ describe('WeaponData', () => {
     expect(WEAPONS.BREACH12).toBeDefined();
     expect(Object.keys(WEAPONS).length).toBe(6);
   });
+
+  it('should have scope data on BOLT88 sniper', () => {
+    expect(WEAPONS.BOLT88.scope).toBeDefined();
+    expect(WEAPONS.BOLT88.scope.zoomFov).toBe(30);
+    expect(WEAPONS.BOLT88.scope.sensitivityMultiplier).toBe(0.4);
+  });
+
+  it('should not have scope data on non-sniper weapons', () => {
+    expect(WEAPONS.V44SABRE.scope).toBeUndefined();
+    expect(WEAPONS.SIDEARM.scope).toBeUndefined();
+    expect(WEAPONS.CINCH9.scope).toBeUndefined();
+    expect(WEAPONS.KNIFE.scope).toBeUndefined();
+  });
 });

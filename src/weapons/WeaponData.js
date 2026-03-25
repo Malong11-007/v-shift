@@ -68,7 +68,11 @@ export const WEAPONS = {
         fireRate: 60 / 40, // 40 RPM
         moveSpeedMultiplier: 0.8,
         recoilX: 0.0,
-        recoilY: 0.2
+        recoilY: 0.2,
+        scope: {
+            zoomFov: 30,
+            sensitivityMultiplier: 0.4
+        }
     },
     KNIFE: {
         id: 'KNIFE',
