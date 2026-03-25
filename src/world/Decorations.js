@@ -411,7 +411,7 @@ class Decorations {
         
         obj.position.set(
             Math.cos(angle) * dist,
-            obj.position ? obj.position.y : 0,
+            obj.position.y || 0,
             Math.sin(angle) * dist
         );
         obj.rotation.y = Math.random() * Math.PI * 2;

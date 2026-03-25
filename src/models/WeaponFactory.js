@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const SEG = 16; // Higher segment count for smooth cylinders
+const CYLINDER_SEGMENTS = 16; // Higher segment count for smooth cylinders
 
 class WeaponFactory {
     static createWeapon(id) {
@@ -56,7 +56,7 @@ class WeaponFactory {
         group.add(ejectionPort);
 
         // --- Barrel (multi-part) ---
-        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.4, SEG), metal);
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.4, CYLINDER_SEGMENTS), metal);
         barrel.rotation.x = Math.PI / 2;
         barrel.position.z = 0.34;
         group.add(barrel);
@@ -78,7 +78,7 @@ class WeaponFactory {
         group.add(frontSight);
 
         // Flash hider (multi-prong)
-        const flashBase = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.018, 0.04, SEG), metal);
+        const flashBase = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.018, 0.04, CYLINDER_SEGMENTS), metal);
         flashBase.rotation.x = Math.PI / 2;
         flashBase.position.z = 0.55;
         group.add(flashBase);
@@ -128,7 +128,7 @@ class WeaponFactory {
         }
 
         // --- Trigger guard & trigger ---
-        const triggerGuard = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.004, 6, SEG, Math.PI), dark);
+        const triggerGuard = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.004, 6, CYLINDER_SEGMENTS, Math.PI), dark);
         triggerGuard.rotation.y = Math.PI / 2;
         triggerGuard.position.set(0, -0.06, -0.01);
         group.add(triggerGuard);
@@ -153,7 +153,7 @@ class WeaponFactory {
         }
 
         // --- Stock (Adjustable) ---
-        const bufferTube = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.15, SEG), metal);
+        const bufferTube = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.15, CYLINDER_SEGMENTS), metal);
         bufferTube.rotation.x = Math.PI / 2;
         bufferTube.position.z = -0.21;
         group.add(bufferTube);
@@ -199,13 +199,13 @@ class WeaponFactory {
         group.add(opticHousing);
 
         // Optic lens (glowing)
-        const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.003, SEG), this._lens());
+        const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.003, CYLINDER_SEGMENTS), this._lens());
         lens.rotation.x = Math.PI / 2;
         lens.position.set(0, 0.085, 0.072);
         group.add(lens);
 
         // Rear lens
-        const rearLens = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.003, SEG), this._lens());
+        const rearLens = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.003, CYLINDER_SEGMENTS), this._lens());
         rearLens.rotation.x = Math.PI / 2;
         rearLens.position.set(0, 0.085, 0.008);
         group.add(rearLens);
@@ -260,24 +260,24 @@ class WeaponFactory {
         group.add(chHandle);
 
         // Suppressor (integrated, multi-segment)
-        const suppBase = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.06, SEG), metal);
+        const suppBase = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.06, CYLINDER_SEGMENTS), metal);
         suppBase.rotation.x = Math.PI / 2;
         suppBase.position.z = 0.14;
         group.add(suppBase);
 
-        const suppMain = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.12, SEG), metal);
+        const suppMain = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.12, CYLINDER_SEGMENTS), metal);
         suppMain.rotation.x = Math.PI / 2;
         suppMain.position.z = 0.24;
         group.add(suppMain);
 
-        const suppTip = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.02, 0.04, SEG), metal);
+        const suppTip = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.02, 0.04, CYLINDER_SEGMENTS), metal);
         suppTip.rotation.x = Math.PI / 2;
         suppTip.position.z = 0.32;
         group.add(suppTip);
 
         // Suppressor rings (detail)
         for (let i = 0; i < 3; i++) {
-            const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.005, SEG), this._metalMid());
+            const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.005, CYLINDER_SEGMENTS), this._metalMid());
             ring.rotation.x = Math.PI / 2;
             ring.position.z = 0.19 + i * 0.04;
             group.add(ring);
@@ -295,7 +295,7 @@ class WeaponFactory {
         }
 
         // Trigger guard
-        const triggerGuard = new THREE.Mesh(new THREE.TorusGeometry(0.015, 0.003, 6, SEG, Math.PI), dark);
+        const triggerGuard = new THREE.Mesh(new THREE.TorusGeometry(0.015, 0.003, 6, CYLINDER_SEGMENTS, Math.PI), dark);
         triggerGuard.rotation.y = Math.PI / 2;
         triggerGuard.position.set(0, -0.05, 0.01);
         group.add(triggerGuard);
@@ -313,7 +313,7 @@ class WeaponFactory {
         group.add(grip);
 
         // Vertical Grip (fore-grip)
-        const vGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.015, 0.08, SEG), rubber);
+        const vGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.015, 0.08, CYLINDER_SEGMENTS), rubber);
         vGrip.position.set(0, -0.08, 0.1);
         group.add(vGrip);
         const vGripBase = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.015, 0.025), dark);
@@ -382,13 +382,13 @@ class WeaponFactory {
 
         // Double Barrel
         for (const offset of [-0.02, 0.02]) {
-            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.55, SEG), metal);
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.55, CYLINDER_SEGMENTS), metal);
             barrel.rotation.x = Math.PI / 2;
             barrel.position.set(offset, 0.01, 0.45);
             group.add(barrel);
 
             // Barrel collar
-            const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.02, SEG), this._metalMid());
+            const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.02, CYLINDER_SEGMENTS), this._metalMid());
             collar.rotation.x = Math.PI / 2;
             collar.position.set(offset, 0.01, 0.72);
             group.add(collar);
@@ -416,7 +416,7 @@ class WeaponFactory {
         }
 
         // Trigger guard
-        const triggerGuard = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.004, 6, SEG, Math.PI), dark);
+        const triggerGuard = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.004, 6, CYLINDER_SEGMENTS, Math.PI), dark);
         triggerGuard.rotation.y = Math.PI / 2;
         triggerGuard.position.set(0, -0.07, -0.04);
         group.add(triggerGuard);
@@ -493,7 +493,7 @@ class WeaponFactory {
         group.add(boltKnob);
 
         // Long fluted barrel
-        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.018, 0.8, SEG), metal);
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.018, 0.8, CYLINDER_SEGMENTS), metal);
         barrel.rotation.x = Math.PI / 2;
         barrel.position.z = 0.6;
         group.add(barrel);
@@ -520,7 +520,7 @@ class WeaponFactory {
         }
 
         // Trigger guard
-        const triggerGuard = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.004, 6, SEG, Math.PI), dark);
+        const triggerGuard = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.004, 6, CYLINDER_SEGMENTS, Math.PI), dark);
         triggerGuard.rotation.y = Math.PI / 2;
         triggerGuard.position.set(0, -0.065, -0.04);
         group.add(triggerGuard);
@@ -537,45 +537,45 @@ class WeaponFactory {
             const mount = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.025), metal);
             mount.position.set(0, 0.07, -0.03 + i * 0.2);
             group.add(mount);
-            const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.015, SEG), metal);
+            const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.015, CYLINDER_SEGMENTS), metal);
             ring.rotation.x = Math.PI / 2;
             ring.position.set(0, 0.1, -0.03 + i * 0.2);
             group.add(ring);
         }
 
         // Scope tube
-        const scopeTube = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.32, SEG), metal);
+        const scopeTube = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.32, CYLINDER_SEGMENTS), metal);
         scopeTube.rotation.x = Math.PI / 2;
         scopeTube.position.set(0, 0.1, 0.08);
         group.add(scopeTube);
 
         // Objective lens (front)
-        const objBell = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.032, 0.06, SEG), metal);
+        const objBell = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.032, 0.06, CYLINDER_SEGMENTS), metal);
         objBell.rotation.x = Math.PI / 2;
         objBell.position.set(0, 0.1, 0.27);
         group.add(objBell);
-        const objLens = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.005, SEG), this._lens());
+        const objLens = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.005, CYLINDER_SEGMENTS), this._lens());
         objLens.rotation.x = Math.PI / 2;
         objLens.position.set(0, 0.1, 0.3);
         group.add(objLens);
 
         // Eyepiece lens (rear)
-        const eyeLens = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.005, SEG), this._lens());
+        const eyeLens = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.005, CYLINDER_SEGMENTS), this._lens());
         eyeLens.rotation.x = Math.PI / 2;
         eyeLens.position.set(0, 0.1, -0.08);
         group.add(eyeLens);
 
         // Scope turrets (windage/elevation)
-        const turretW = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.025, SEG), metal);
+        const turretW = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.025, CYLINDER_SEGMENTS), metal);
         turretW.position.set(0, 0.14, 0.06);
         group.add(turretW);
-        const turretE = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.025, SEG), metal);
+        const turretE = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.025, CYLINDER_SEGMENTS), metal);
         turretE.rotation.z = Math.PI / 2;
         turretE.position.set(0.045, 0.1, 0.06);
         group.add(turretE);
 
         // Parallax adjustment
-        const parallax = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.025, SEG), metal);
+        const parallax = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.025, CYLINDER_SEGMENTS), metal);
         parallax.rotation.z = Math.PI / 2;
         parallax.position.set(-0.045, 0.1, 0.06);
         group.add(parallax);
@@ -672,7 +672,7 @@ class WeaponFactory {
         group.add(frame);
 
         // Trigger guard
-        const triggerGuard = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.003, 6, SEG, Math.PI), black);
+        const triggerGuard = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.003, 6, CYLINDER_SEGMENTS, Math.PI), black);
         triggerGuard.rotation.y = Math.PI / 2;
         triggerGuard.position.set(0, -0.03, 0.01);
         group.add(triggerGuard);
@@ -684,7 +684,7 @@ class WeaponFactory {
         group.add(trigger);
 
         // Barrel (visible through slide)
-        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.06, SEG), this._metalMid());
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.06, CYLINDER_SEGMENTS), this._metalMid());
         barrel.rotation.x = Math.PI / 2;
         barrel.position.set(0, 0.015, 0.12);
         group.add(barrel);
@@ -771,21 +771,21 @@ class WeaponFactory {
         group.add(guard);
 
         // Handle (ergonomic, layered)
-        const handleCore = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.014, 0.12, SEG), carbon);
+        const handleCore = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.014, 0.12, CYLINDER_SEGMENTS), carbon);
         handleCore.rotation.x = Math.PI / 2;
         handleCore.position.z = -0.06;
         group.add(handleCore);
 
         // Handle grooves
         for (let i = 0; i < 4; i++) {
-            const groove = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.005, SEG), dark);
+            const groove = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.005, CYLINDER_SEGMENTS), dark);
             groove.rotation.x = Math.PI / 2;
             groove.position.z = -0.03 - i * 0.025;
             group.add(groove);
         }
 
         // Pommel (skull crusher)
-        const pommel = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.016, 0.015, SEG), dark);
+        const pommel = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.016, 0.015, CYLINDER_SEGMENTS), dark);
         pommel.rotation.x = Math.PI / 2;
         pommel.position.z = -0.13;
         group.add(pommel);

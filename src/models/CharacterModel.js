@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const SEG_HIGH = 12; // Higher segment count for smoother cylinders/capsules
+const CYLINDER_SEGMENTS = 12; // Higher segment count for smoother cylinders/capsules
 
 class CharacterModel {
     constructor(teamColor = 0x3366aa) {
@@ -121,7 +121,7 @@ class CharacterModel {
 
         // Neck cylinder
         const neckMesh = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.05, 0.06, 0.08, SEG_HIGH), this.skinMat
+            new THREE.CylinderGeometry(0.05, 0.06, 0.08, CYLINDER_SEGMENTS), this.skinMat
         );
         neckMesh.position.y = 0.02;
         this.neck.add(neckMesh);
@@ -234,13 +234,13 @@ class CharacterModel {
 
         // Upper arm
         const upperArm = new THREE.Mesh(
-            new THREE.CapsuleGeometry(0.055, 0.2, SEG_HIGH, SEG_HIGH), this.clothesMat
+            new THREE.CapsuleGeometry(0.055, 0.2, CYLINDER_SEGMENTS, CYLINDER_SEGMENTS), this.clothesMat
         );
         upperArm.position.y = -0.1;
         shoulder.add(upperArm);
 
         // Bicep band
-        const bicepBand = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.02, SEG_HIGH), this.padMat);
+        const bicepBand = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.02, CYLINDER_SEGMENTS), this.padMat);
         bicepBand.position.y = -0.04;
         shoulder.add(bicepBand);
 
@@ -257,13 +257,13 @@ class CharacterModel {
 
         // Forearm
         const forearm = new THREE.Mesh(
-            new THREE.CapsuleGeometry(0.045, 0.18, SEG_HIGH, SEG_HIGH), this.skinMat
+            new THREE.CapsuleGeometry(0.045, 0.18, CYLINDER_SEGMENTS, CYLINDER_SEGMENTS), this.skinMat
         );
         forearm.position.y = -0.1;
         elbow.add(forearm);
 
         // Wrist guard (sleeve cuff)
-        const wristGuard = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.048, 0.03, SEG_HIGH), this.gloveMat);
+        const wristGuard = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.048, 0.03, CYLINDER_SEGMENTS), this.gloveMat);
         wristGuard.position.y = -0.18;
         elbow.add(wristGuard);
 
@@ -299,7 +299,7 @@ class CharacterModel {
 
         // Upper leg (thigh)
         const upperLeg = new THREE.Mesh(
-            new THREE.CapsuleGeometry(0.075, 0.3, SEG_HIGH, SEG_HIGH), this.pantsMat
+            new THREE.CapsuleGeometry(0.075, 0.3, CYLINDER_SEGMENTS, CYLINDER_SEGMENTS), this.pantsMat
         );
         upperLeg.position.y = -0.15;
         leg.add(upperLeg);
@@ -311,7 +311,7 @@ class CharacterModel {
 
         // Thigh strap
         const thighStrap = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.08, 0.08, 0.02, SEG_HIGH), this.beltMat
+            new THREE.CylinderGeometry(0.08, 0.08, 0.02, CYLINDER_SEGMENTS), this.beltMat
         );
         thighStrap.position.y = -0.08;
         leg.add(thighStrap);
@@ -333,14 +333,14 @@ class CharacterModel {
 
         // Lower leg (shin)
         const lowerLeg = new THREE.Mesh(
-            new THREE.CapsuleGeometry(0.065, 0.3, SEG_HIGH, SEG_HIGH), this.pantsMat
+            new THREE.CapsuleGeometry(0.065, 0.3, CYLINDER_SEGMENTS, CYLINDER_SEGMENTS), this.pantsMat
         );
         lowerLeg.position.y = -0.15;
         knee.add(lowerLeg);
 
         // Ankle band
         const ankleBand = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.07, 0.07, 0.025, SEG_HIGH), this.bootMat
+            new THREE.CylinderGeometry(0.07, 0.07, 0.025, CYLINDER_SEGMENTS), this.bootMat
         );
         ankleBand.position.y = -0.28;
         knee.add(ankleBand);

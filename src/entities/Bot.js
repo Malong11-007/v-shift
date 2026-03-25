@@ -27,7 +27,7 @@ export default class Bot {
         this.lastShotTime = 0;
         this.fireRate = 400; // ms
         this.spawnProtectionUntil = performance.now() + 2000;
-        this.spawnPos = startPos.clone();
+        this.spawnPos = new THREE.Vector3().copy(startPos);
 
         // Visuals
         this.group = new THREE.Group();

@@ -336,7 +336,9 @@ export default class Ragdoll {
         // Remove joints first
         this.joints.forEach(joint => {
             if (physics.world) {
-                try { physics.world.removeImpulseJoint(joint, true); } catch (_e) { /* already removed */ }
+                try { physics.world.removeImpulseJoint(joint, true); } catch (e) {
+                    if (!String(e).includes('already')) console.warn('[Ragdoll] Joint removal error:', e);
+                }
             }
         });
 
@@ -345,7 +347,9 @@ export default class Ragdoll {
             this.group.remove(part.mesh);
             if (part.mesh.geometry) part.mesh.geometry.dispose();
             if (physics.world && part.body) {
-                try { physics.world.removeRigidBody(part.body); } catch (_e) { /* already removed */ }
+                try { physics.world.removeRigidBody(part.body); } catch (e) {
+                    if (!String(e).includes('already')) console.warn('[Ragdoll] Body removal error:', e);
+                }
             }
         });
 
