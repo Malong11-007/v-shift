@@ -254,13 +254,24 @@ export default class Bot {
         // Called at the start of each new round to fully reset the bot
         this.respawn();
         // Move to original spawn position for consistent round starts
-        const point = arena.getBotSpawn();
+        const point = this.spawnPos;
         if (this.body && physics.world) {
             physics.world.removeRigidBody(this.body);
             this.body = null;
         }
         this.initPhysics(point);
         this.group.position.copy(point);
+    }
+
+    destroy() {
+        window.removeEventListener('roundReset', this._onRoundReset);
+        if (this.body && physics.world) {
+            physics.world.removeRigidBody(this.body);
+            this.body = null;
+        }
+        if (this.group && this.group.parent) {
+            this.group.parent.remove(this.group);
+        }
     }
 
     update(dt) {
