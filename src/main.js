@@ -1,5 +1,7 @@
 import engine from './core/Engine.js';
 import physics from './physics/PhysicsWorld.js';
+import ammoPhysics from './physics/AmmoPhysics.js';
+import pathfindingManager from './ai/PathfindingManager.js';
 import gameState, { STATES } from './core/GameState.js';
 import audioManager from './core/AudioManager.js';
 import BulletTracer from './game/BulletTracer.js';
@@ -36,19 +38,26 @@ const init = async () => {
     await physics.init();
     engine.addUpdatable(physics);
     engine.addUpdatable(gamepadManager);
-    
+
+    // Initialize AmmoPhysics for enhanced physics features
+    await ammoPhysics.init();
+    engine.addUpdatable(ammoPhysics);
+
     const urlParams = new URLSearchParams(window.location.search);
     const isTestRoom = urlParams.has('test');
-    
+
     if (isTestRoom) {
         const testRoom = new TestRoom();
         testRoom.init();
         engine.scene.add(testRoom.group);
         engine.scene.add(skybox.mesh);
-        
+
         // Extra light for test room
         const ambient = new THREE.AmbientLight(0xffffff, 0.5);
         engine.scene.add(ambient);
+
+        // Initialize pathfinding for test room
+        pathfindingManager.init(engine.scene);
     } else {
         // Generate Arena & Decorations
         arena.init();
@@ -56,6 +65,9 @@ const init = async () => {
         engine.scene.add(arena.group);
         engine.scene.add(skybox.mesh);
         engine.scene.add(decorations.group);
+
+        // Initialize pathfinding for arena
+        pathfindingManager.init(engine.scene);
     }
 
 
