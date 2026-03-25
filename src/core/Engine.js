@@ -26,7 +26,7 @@ class Engine {
 
     init() {
         const canvas = this.getCanvas();
-        // 1. Renderer
+        // 1. Renderer (enhanced)
         this.renderer = new THREE.WebGLRenderer({ 
             canvas: canvas, 
             antialias: true,
@@ -34,39 +34,77 @@ class Engine {
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        // Soft shadows and good lighting calculations
+
+        // Shadows — PCFSoft at higher resolution
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+        // Tone mapping for cinematic look
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.1;
+
         // 2. Scene
         this.scene = new THREE.Scene();
-        // Fallback dark background
         this.scene.background = new THREE.Color(0x0f0f13);
-        this.scene.fog = new THREE.FogExp2(0x0f0f13, 0.015);
+        this.scene.fog = new THREE.FogExp2(0x0f0f13, 0.012);
 
         // 3. Camera (FOV 90 for good competitive feel)
         this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.scene.add(this.camera);
 
-        // 4. Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        this.scene.add(ambientLight);
-
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        dirLight.position.set(50, 100, 50);
-        dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        dirLight.shadow.camera.near = 0.5;
-        dirLight.shadow.camera.far = 200;
-        dirLight.shadow.camera.left = -50;
-        dirLight.shadow.camera.right = 50;
-        dirLight.shadow.camera.top = 50;
-        dirLight.shadow.camera.bottom = -50;
-        this.scene.add(dirLight);
+        // 4. Lighting Setup (multi-light rig)
+        this._setupLighting();
 
         // Event Listeners
         window.addEventListener('resize', this.onWindowResize.bind(this));
+    }
+
+    _setupLighting() {
+        // Hemisphere Light (sky/ground ambient fill)
+        const hemiLight = new THREE.HemisphereLight(0x3344aa, 0x111111, 0.4);
+        hemiLight.position.set(0, 50, 0);
+        this.scene.add(hemiLight);
+
+        // Ambient Light (base fill to prevent pure black shadows)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
+        this.scene.add(ambientLight);
+
+        // Primary Directional Light (sun/moon — warm key light)
+        const dirLight = new THREE.DirectionalLight(0xffe8d0, 1.8);
+        dirLight.position.set(40, 80, 30);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 4096;
+        dirLight.shadow.mapSize.height = 4096;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 250;
+        dirLight.shadow.camera.left = -60;
+        dirLight.shadow.camera.right = 60;
+        dirLight.shadow.camera.top = 60;
+        dirLight.shadow.camera.bottom = -60;
+        dirLight.shadow.bias = -0.0005;
+        dirLight.shadow.normalBias = 0.02;
+        this.scene.add(dirLight);
+        this.dirLight = dirLight;
+
+        // Secondary fill light (cool blue rim light from opposite side)
+        const fillLight = new THREE.DirectionalLight(0x4488cc, 0.5);
+        fillLight.position.set(-30, 40, -20);
+        this.scene.add(fillLight);
+
+        // Rim / Back light for character separation (subtle warm kick from behind)
+        const rimLight = new THREE.DirectionalLight(0xffcc88, 0.3);
+        rimLight.position.set(-10, 20, -50);
+        this.scene.add(rimLight);
+
+        // Bomb site A ambient glow
+        const siteALight = new THREE.PointLight(0xff4400, 0.6, 25, 2);
+        siteALight.position.set(0, 3, 20);
+        this.scene.add(siteALight);
+
+        // Bomb site B ambient glow
+        const siteBLight = new THREE.PointLight(0x0044ff, 0.6, 25, 2);
+        siteBLight.position.set(0, 3, -20);
+        this.scene.add(siteBLight);
     }
 
     onWindowResize() {
