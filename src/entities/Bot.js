@@ -15,6 +15,9 @@ export const BOT_STATES = {
     PATROL: 'PATROL',
     CHASE: 'CHASE',
     ATTACK: 'ATTACK',
+    MOVE_TO_SITE: 'MOVE_TO_SITE',
+    PLANT_SPIKE: 'PLANT_SPIKE',
+    DEFUSE_SPIKE: 'DEFUSE_SPIKE',
     DEAD: 'DEAD'
 };
 
@@ -43,6 +46,14 @@ export default class Bot {
         // Target tracking
         this.targetNode = null;
         this.playerTarget = null; // Set dynamically when player is in LOS
+
+        // Spike AI properties
+        this.spikeCarrier = false; // Is this bot carrying the spike?
+        this.targetSite = null; // Target spike site for planting
+        this.plantProgress = 0; // Progress towards planting spike
+        this.defuseProgress = 0; // Progress towards defusing spike
+        this.spikeDecisionTimer = 0; // Cooldown for spike decisions
+        this.moveToSiteTimer = 0; // Time spent moving to site
 
         this.initVisuals();
         this.initPhysics(startPos);
@@ -271,6 +282,99 @@ export default class Bot {
         this.group.position.copy(point);
     }
 
+    // Spike AI Methods
+    shouldPlantSpike(spike) {
+        // Only attackers with spike carrier can plant
+        if (this.team !== BOT_TEAMS.ATTACKERS) return false;
+        if (!this.spikeCarrier) return false;
+        if (!spike || spike.state !== 'IDLE') return false;
+
+        // Check if at a spike site
+        const site = this.getNearestSpikeSite();
+        return site !== null;
+    }
+
+    shouldDefuseSpike(spike) {
+        // Only defenders can defuse
+        if (this.team !== BOT_TEAMS.DEFENDERS) return false;
+        if (!spike || spike.state !== 'PLANTED') return false;
+
+        // Check if close enough to spike
+        const dist = this.group.position.distanceTo(spike.group.position);
+        return dist < 3;
+    }
+
+    getNearestSpikeSite() {
+        // Import SPIKE_SITES - we'll need to pass this from spike instance
+        if (!window.spike || !window.spike.constructor.SPIKE_SITES) return null;
+
+        const sites = window.spike.constructor.SPIKE_SITES || [
+            { name: 'A', position: new THREE.Vector3(-20, 0.05, -15), radius: 5 },
+            { name: 'B', position: new THREE.Vector3(20, 0.05, 15), radius: 5 }
+        ];
+
+        for (const site of sites) {
+            const dx = this.group.position.x - site.position.x;
+            const dz = this.group.position.z - site.position.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            if (dist < site.radius) return site;
+        }
+        return null;
+    }
+
+    selectSpikeSite() {
+        // Simple site selection - prefer closer site, or random
+        const sites = [
+            { name: 'A', position: new THREE.Vector3(0, 1, 20) },
+            { name: 'B', position: new THREE.Vector3(0, 1, -20) }
+        ];
+
+        const distA = this.group.position.distanceTo(sites[0].position);
+        const distB = this.group.position.distanceTo(sites[1].position);
+
+        // Add some randomness - prefer closer site but not always
+        if (Math.random() < 0.7) {
+            return distA < distB ? sites[0] : sites[1];
+        } else {
+            return distA < distB ? sites[1] : sites[0];
+        }
+    }
+
+    moveTowards(targetPos, dt) {
+        // Simple movement towards target position
+        const dir = new THREE.Vector3().subVectors(targetPos, this.group.position);
+        dir.y = 0;
+        const distance = dir.length();
+
+        if (distance < 1) return true; // Reached destination
+
+        dir.normalize();
+
+        const vel = { x: 0, y: this.body.linvel().y, z: 0 };
+        vel.x = dir.x * this.speed;
+        vel.z = dir.z * this.speed;
+
+        this.body.setLinvel(vel, true);
+
+        // Look at target
+        const lookTarget = new THREE.Vector3(targetPos.x, this.group.position.y, targetPos.z);
+        this.group.lookAt(lookTarget);
+
+        return false; // Not yet reached
+    }
+
+    startPlanting(spike) {
+        this.state = BOT_STATES.PLANT_SPIKE;
+        this.plantProgress = 0;
+        console.log(`[Bot ${this.id}] Starting to plant spike`);
+    }
+
+    startDefusing(spike) {
+        this.state = BOT_STATES.DEFUSE_SPIKE;
+        this.defuseProgress = 0;
+        console.log(`[Bot ${this.id}] Starting to defuse spike`);
+    }
+
     destroy() {
         window.removeEventListener('roundReset', this._onRoundReset);
         if (this.body && physics.world) {
@@ -297,7 +401,99 @@ export default class Bot {
         if (!this.strafeTimer) this.strafeTimer = 0;
         this.strafeTimer += dt;
 
-        // Find targets: player or enemy bots
+        // Spike AI Decision Making (runs periodically)
+        this.spikeDecisionTimer += dt;
+        const spike = window.spike;
+
+        if (this.spikeDecisionTimer > 2.0 && spike) { // Check every 2 seconds
+            this.spikeDecisionTimer = 0;
+
+            // Attacker with spike: prioritize planting
+            if (this.team === BOT_TEAMS.ATTACKERS && this.spikeCarrier && spike.state === 'IDLE') {
+                const atSite = this.getNearestSpikeSite();
+                if (atSite) {
+                    this.startPlanting(spike);
+                } else if (this.state !== BOT_STATES.MOVE_TO_SITE) {
+                    // Pick a site and move towards it
+                    this.targetSite = this.selectSpikeSite();
+                    this.state = BOT_STATES.MOVE_TO_SITE;
+                    this.moveToSiteTimer = 0;
+                    console.log(`[Bot ${this.id}] Moving to spike site ${this.targetSite.name}`);
+                }
+            }
+
+            // Defender: prioritize defusing if spike is planted
+            if (this.team === BOT_TEAMS.DEFENDERS && spike.state === 'PLANTED') {
+                if (this.shouldDefuseSpike(spike) && this.state !== BOT_STATES.DEFUSE_SPIKE) {
+                    this.startDefusing(spike);
+                } else if (this.state !== BOT_STATES.MOVE_TO_SITE) {
+                    // Move towards spike to defuse
+                    this.targetSite = { position: spike.group.position };
+                    this.state = BOT_STATES.MOVE_TO_SITE;
+                }
+            }
+        }
+
+        // Handle spike-related states
+        if (this.state === BOT_STATES.PLANT_SPIKE) {
+            this.plantProgress += dt;
+            if (this.plantProgress >= 3.5 && spike) { // 3.5 seconds to plant
+                // Complete plant
+                spike.startPlanting(this.getNearestSpikeSite());
+                spike.plantProgress = spike.plantTime; // Instantly complete
+                spike.completePlant();
+                this.spikeCarrier = false;
+                this.state = BOT_STATES.PATROL;
+                console.log(`[Bot ${this.id}] Planted spike!`);
+            }
+            // Stand still while planting
+            const vel = { x: 0, y: this.body.linvel().y, z: 0 };
+            this.body.setLinvel(vel, true);
+            return;
+        }
+
+        if (this.state === BOT_STATES.DEFUSE_SPIKE) {
+            this.defuseProgress += dt;
+            if (this.defuseProgress >= 5.0 && spike) { // 5 seconds to defuse
+                // Complete defuse
+                spike.startDefusing();
+                spike.defuseProgress = spike.defuseTime; // Instantly complete
+                spike.completeDefuse();
+                this.state = BOT_STATES.PATROL;
+                console.log(`[Bot ${this.id}] Defused spike!`);
+            }
+            // Stand still while defusing
+            const vel = { x: 0, y: this.body.linvel().y, z: 0 };
+            this.body.setLinvel(vel, true);
+            return;
+        }
+
+        if (this.state === BOT_STATES.MOVE_TO_SITE && this.targetSite) {
+            this.moveToSiteTimer += dt;
+
+            // Check if reached site or timeout
+            if (this.moveTowards(this.targetSite.position, dt) || this.moveToSiteTimer > 30) {
+                this.state = BOT_STATES.PATROL;
+                this.targetSite = null;
+            }
+
+            // Update animation for movement
+            if (this.animator) {
+                const vel = this.body.linvel();
+                const speedSq = vel.x * vel.x + vel.z * vel.z;
+                if (speedSq > 16.0) {
+                    this.animator.setState('RUN');
+                } else if (speedSq > 0.25) {
+                    this.animator.setState('WALK');
+                } else {
+                    this.animator.setState('IDLE');
+                }
+                this.animator.update(dt);
+            }
+            return; // Don't do combat AI while moving to site
+        }
+
+        // Standard combat AI (find targets and engage)
         const targets = this.findTargets();
         if (targets.length === 0) {
             this.state = BOT_STATES.PATROL;

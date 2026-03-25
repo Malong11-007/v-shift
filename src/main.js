@@ -21,6 +21,7 @@ import uiManager from './ui/UIManager.js';
 import tutorial from './ui/Tutorial.js';
 import feedbackSystem from './game/FeedbackSystem.js';
 import Bot, { BOT_TEAMS } from './entities/Bot.js';
+import Spike from './entities/Spike.js';
 import * as THREE from 'three';
 
 console.log('V-SHIFT Initializing...');
@@ -105,6 +106,19 @@ const init = async () => {
         });
 
         console.log(`[main.js] Spawned ${teamSize} defenders and ${teamSize - 1} attackers (+ player)`);
+
+        // Initialize spike for competitive mode
+        window.spike = new Spike();
+
+        // Assign spike to a random attacker bot
+        const attackerBots = window.bots.filter(b => b.team === BOT_TEAMS.ATTACKERS);
+        if (attackerBots.length > 0) {
+            const spikeCarrier = attackerBots[Math.floor(Math.random() * attackerBots.length)];
+            spikeCarrier.spikeCarrier = true;
+            window.spike.assignCarrier(spikeCarrier);
+            console.log(`[main.js] Assigned spike to ${spikeCarrier.id}`);
+        }
+
         // Don't transition here yet, wait for assets to load fully.
     }
     window.bots.forEach(bot => engine.addUpdatable(bot));
