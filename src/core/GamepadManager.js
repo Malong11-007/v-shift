@@ -23,12 +23,14 @@ import gameState, { STATES } from './GameState.js';
  *   D-Pad Left  (btn 14):   Weapon slot 3
  *   D-Pad Right (btn 15):   Weapon slot 4
  */
+const STANDARD_BUTTON_COUNT = 17; // Standard Gamepad spec: 0-16
+
 class GamepadManager {
     constructor() {
         this.deadzone = 0.15;
         this.lookSpeed = 600;
         this.connected = false;
-        this.prevButtons = new Array(17).fill(false);
+        this.prevButtons = new Array(STANDARD_BUTTON_COUNT).fill(false);
 
         window.addEventListener('gamepadconnected', () => {
             this.connected = true;
@@ -104,7 +106,7 @@ class GamepadManager {
 
         input.gamepadCrouchHeld = pressed(1);
 
-        for (let i = 0; i < 17 && i < buttons.length; i++) {
+        for (let i = 0; i < STANDARD_BUTTON_COUNT && i < buttons.length; i++) {
             this.prevButtons[i] = pressed(i);
         }
     }

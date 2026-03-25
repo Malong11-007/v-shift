@@ -159,6 +159,7 @@ class InputManager {
 
     /**
      * Returns true if crouch is held on any input source.
+     * KeyC and ControlLeft are both mapped to crouch (matching keyboard event bindings).
      */
     isCrouching() {
         return this.isKeyDown('KeyC') || this.isKeyDown('ControlLeft')

@@ -6,7 +6,7 @@ import BulletTracer from './game/BulletTracer.js';
 import collision from './physics/Collision.js';
 import inputManager from './core/InputManager.js';
 import gamepadManager from './core/GamepadManager.js';
-import touchControls from './core/TouchControls.js';
+import touchControls from './core/TouchControls.js'; // event-driven; init-only import
 import arena from './world/Arena.js';
 import skybox from './world/Skybox.js';
 import decorations from './world/Decorations.js';
