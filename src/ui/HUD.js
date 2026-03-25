@@ -287,7 +287,10 @@ class HUD {
     }
 
     show() { this.container.style.display = 'block'; }
-    hide() { this.container.style.display = 'none'; }
+    hide() {
+        this.container.style.display = 'none';
+        radar.hide();
+    }
 
     renderSurgeMeter(detail) {
         const wrapper = document.getElementById('hud-surge');
