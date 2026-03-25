@@ -30,16 +30,20 @@ class Radar {
             borderRadius: '50%',
             overflow: 'hidden',
             zIndex: '100',
-            boxShadow: '0 0 15px rgba(0, 0, 0, 0.5)'
+            boxShadow: '0 0 15px rgba(0, 0, 0, 0.5)',
+            display: 'none'
         });
     }
 
+    show() { this.container.style.display = 'block'; }
+    hide() { this.container.style.display = 'none'; }
+
     update(player) {
         if (!player || !player.isAlive) {
-            this.container.style.display = 'none';
+            this.hide();
             return;
         }
-        this.container.style.display = 'block';
+        this.show();
 
         const ctx = this.ctx;
         const centerX = 75;

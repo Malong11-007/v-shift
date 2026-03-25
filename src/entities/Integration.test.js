@@ -16,7 +16,18 @@ vi.mock('../core/InputManager.js', () => ({
     default: {
         isKeyDown: vi.fn(() => false),
         getMouseDelta: vi.fn(() => ({ x: 0, y: 0 })),
-        isLocked: true
+        getMovementAxes: vi.fn(() => ({ x: 0, z: 0 })),
+        isCrouching: vi.fn(() => false),
+        isInputActive: vi.fn(() => true),
+        isLocked: true,
+        gamepadActive: false,
+        touchActive: false,
+        gamepadMove: { x: 0, z: 0 },
+        gamepadLook: { x: 0, y: 0 },
+        touchMove: { x: 0, z: 0 },
+        touchLook: { x: 0, y: 0 },
+        gamepadCrouchHeld: false,
+        touchCrouchHeld: false
     }
 }));
 

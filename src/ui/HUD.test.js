@@ -93,4 +93,23 @@ describe('HUD Integration', () => {
         window.dispatchEvent(new CustomEvent('momentumSurgeExpired'));
         expect(surge.style.display).toBe('none');
     });
+
+    it('should show scope overlay when scopeChanged event fires with scoped=true', () => {
+        window.dispatchEvent(new CustomEvent('scopeChanged', { detail: { scoped: true } }));
+        
+        const overlay = document.getElementById('scope-overlay');
+        expect(overlay).not.toBeNull();
+        expect(overlay.style.display).toBe('block');
+        // Default crosshair should be hidden
+        expect(hud.crosshair.style.display).toBe('none');
+    });
+
+    it('should hide scope overlay when scopeChanged event fires with scoped=false', () => {
+        window.dispatchEvent(new CustomEvent('scopeChanged', { detail: { scoped: true } }));
+        window.dispatchEvent(new CustomEvent('scopeChanged', { detail: { scoped: false } }));
+        
+        const overlay = document.getElementById('scope-overlay');
+        expect(overlay.style.display).toBe('none');
+        expect(hud.crosshair.style.display).toBe('block');
+    });
 });

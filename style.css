@@ -28,6 +28,7 @@ body {
   height: 100vh;
   z-index: 1; /* Below UI */
   display: block;
+  touch-action: none; /* Prevent default touch gestures on canvas */
 }
 
 #ui-root {

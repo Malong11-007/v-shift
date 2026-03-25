@@ -45,6 +45,10 @@ class HUD {
         this.surgeMeter = this.createSurgeMeter();
         this.container.appendChild(this.surgeMeter);
 
+        // 8. Scope Overlay (hidden by default)
+        this.scopeOverlay = this.createScopeOverlay();
+        this.container.appendChild(this.scopeOverlay);
+
         document.body.appendChild(this.container);
         
         this.initEventListeners();
@@ -276,10 +280,17 @@ class HUD {
             const roundEl = document.getElementById('hud-round-number');
             if (roundEl) roundEl.innerText = `ROUND ${e.detail.round}`;
         });
+
+        window.addEventListener('scopeChanged', (e) => {
+            this.setScopeVisible(e.detail.scoped);
+        });
     }
 
     show() { this.container.style.display = 'block'; }
-    hide() { this.container.style.display = 'none'; }
+    hide() {
+        this.container.style.display = 'none';
+        radar.hide();
+    }
 
     renderSurgeMeter(detail) {
         const wrapper = document.getElementById('hud-surge');
@@ -307,6 +318,74 @@ class HUD {
         wrapper.style.display = 'none';
         fill.style.width = '0%';
         label.innerText = 'SURGE READY';
+    }
+
+    createScopeOverlay() {
+        const overlay = document.createElement('div');
+        overlay.id = 'scope-overlay';
+        Object.assign(overlay.style, {
+            position: 'absolute',
+            top: '0', left: '0', width: '100%', height: '100%',
+            display: 'none',
+            pointerEvents: 'none'
+        });
+
+        // Dark vignette border
+        const vignette = document.createElement('div');
+        Object.assign(vignette.style, {
+            position: 'absolute',
+            top: '0', left: '0', width: '100%', height: '100%',
+            background: 'radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.85) 70%)',
+            borderRadius: '0'
+        });
+        overlay.appendChild(vignette);
+
+        // Horizontal crosshair line
+        const hLine = document.createElement('div');
+        Object.assign(hLine.style, {
+            position: 'absolute',
+            top: '50%', left: '0',
+            width: '100%', height: '1px',
+            backgroundColor: 'rgba(0,240,255,0.6)',
+            transform: 'translateY(-0.5px)'
+        });
+        overlay.appendChild(hLine);
+
+        // Vertical crosshair line
+        const vLine = document.createElement('div');
+        Object.assign(vLine.style, {
+            position: 'absolute',
+            top: '0', left: '50%',
+            width: '1px', height: '100%',
+            backgroundColor: 'rgba(0,240,255,0.6)',
+            transform: 'translateX(-0.5px)'
+        });
+        overlay.appendChild(vLine);
+
+        // Center dot
+        const dot = document.createElement('div');
+        Object.assign(dot.style, {
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '6px', height: '6px',
+            borderRadius: '50%',
+            backgroundColor: '#ff0044',
+            boxShadow: '0 0 6px #ff0044'
+        });
+        overlay.appendChild(dot);
+
+        return overlay;
+    }
+
+    setScopeVisible(visible) {
+        if (this.scopeOverlay) {
+            this.scopeOverlay.style.display = visible ? 'block' : 'none';
+        }
+        // Hide default crosshair when scoped
+        if (this.crosshair) {
+            this.crosshair.style.display = visible ? 'none' : 'block';
+        }
     }
 }
 

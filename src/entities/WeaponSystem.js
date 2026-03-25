@@ -33,6 +33,8 @@ export default class WeaponSystem {
         // State tracking
         this.lastFireTime = 0;
         this.isReloading = false;
+        this.isScoped = false;
+        this.baseFov = engine.camera.fov;
         
         // Recoil tracking for recovery
         this.recoilOffsetPitch = 0;
@@ -40,6 +42,7 @@ export default class WeaponSystem {
 
         window.addEventListener('onWeaponSwitch', (e) => this.switchWeapon(e.detail - 1));
         window.addEventListener('playerFired', this.fire.bind(this));
+        window.addEventListener('onShootSecondary', () => this.toggleScope());
         
         // Equip first weapon visually
         setTimeout(() => this.switchWeapon(0), 100);
@@ -47,6 +50,8 @@ export default class WeaponSystem {
 
     switchWeapon(slotIndex) {
         if (slotIndex < 0 || slotIndex >= this.loadout.length) return;
+        
+        if (this.isScoped) this.unscope();
         
         this.currentSlot = slotIndex;
         this.currentWeapon = this.loadout[slotIndex];
@@ -109,6 +114,11 @@ export default class WeaponSystem {
         
         // Dispatch effects event
         window.dispatchEvent(new CustomEvent('weaponFired', { detail: this.currentWeapon }));
+
+        // Auto-unscope after bolt-action fire for balanced gameplay
+        if (this.isScoped && this.currentWeapon.type === 'bolt') {
+            this.unscope();
+        }
     }
 
     fireHitscan() {
@@ -287,6 +297,8 @@ export default class WeaponSystem {
             return;
         }
         
+        if (this.isScoped) this.unscope();
+        
         this.isReloading = true;
         console.log(`Reloading ${this.currentWeapon.name}...`);
         
@@ -300,6 +312,29 @@ export default class WeaponSystem {
                 this.syncAmmo();
             }
         }, this.currentWeapon.reloadTime * 1000);
+    }
+
+    toggleScope() {
+        if (!this.currentWeapon.scope) return;
+        if (this.isReloading) return;
+        if (this.isScoped) {
+            this.unscope();
+        } else {
+            this.isScoped = true;
+            this.camera.fov = this.currentWeapon.scope.zoomFov;
+            this.camera.updateProjectionMatrix();
+            viewModel.group.visible = false;
+            window.dispatchEvent(new CustomEvent('scopeChanged', { detail: { scoped: true } }));
+        }
+    }
+
+    unscope() {
+        if (!this.isScoped) return;
+        this.isScoped = false;
+        this.camera.fov = this.baseFov;
+        this.camera.updateProjectionMatrix();
+        viewModel.group.visible = true;
+        window.dispatchEvent(new CustomEvent('scopeChanged', { detail: { scoped: false } }));
     }
 
     syncAmmo() {
