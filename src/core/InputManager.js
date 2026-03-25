@@ -12,6 +12,18 @@ class InputManager {
         // Mouse buttons
         this.mouseButtons = new Map(); // 0: left, 1: middle, 2: right
 
+        // Gamepad state (written to by GamepadManager)
+        this.gamepadActive = false;
+        this.gamepadMove = { x: 0, z: 0 };
+        this.gamepadLook = { x: 0, y: 0 };
+        this.gamepadCrouchHeld = false;
+
+        // Touch state (written to by TouchControls)
+        this.touchActive = false;
+        this.touchMove = { x: 0, z: 0 };
+        this.touchLook = { x: 0, y: 0 };
+        this.touchCrouchHeld = false;
+
         this.bindEvents();
     }
 
@@ -92,14 +104,65 @@ class InputManager {
     }
 
     /**
-     * Gets the accumulated mouse delta since last call and resets it.
-     * Should be called exactly once per frame by the PlayerController.
+     * Gets the accumulated look delta from mouse, gamepad, and touch since last call.
+     * Resets accumulated values. Called once per frame by the PlayerController.
      */
     getMouseDelta() {
-        const delta = { x: this.mouseDelta.x, y: this.mouseDelta.y };
+        const delta = {
+            x: this.mouseDelta.x + this.gamepadLook.x + this.touchLook.x,
+            y: this.mouseDelta.y + this.gamepadLook.y + this.touchLook.y
+        };
         this.mouseDelta.x = 0;
         this.mouseDelta.y = 0;
+        this.gamepadLook.x = 0;
+        this.gamepadLook.y = 0;
+        this.touchLook.x = 0;
+        this.touchLook.y = 0;
         return delta;
+    }
+
+    /**
+     * Returns combined movement axes from keyboard, gamepad, and touch.
+     * Values are normalized to the unit circle (-1 to 1 per axis).
+     */
+    getMovementAxes() {
+        let x = 0, z = 0;
+
+        // Keyboard (binary)
+        if (this.isKeyDown('KeyA')) x -= 1;
+        if (this.isKeyDown('KeyD')) x += 1;
+        if (this.isKeyDown('KeyW')) z -= 1;
+        if (this.isKeyDown('KeyS')) z += 1;
+
+        // Gamepad left stick (analog)
+        x += this.gamepadMove.x;
+        z += this.gamepadMove.z;
+
+        // Touch joystick (analog)
+        x += this.touchMove.x;
+        z += this.touchMove.z;
+
+        // Clamp to unit circle
+        const len = Math.sqrt(x * x + z * z);
+        if (len > 1) { x /= len; z /= len; }
+
+        return { x, z };
+    }
+
+    /**
+     * Returns true when any input source is actively providing input
+     * (pointer locked, gamepad connected, or touch controls active).
+     */
+    isInputActive() {
+        return this.isLocked || this.gamepadActive || this.touchActive;
+    }
+
+    /**
+     * Returns true if crouch is held on any input source.
+     */
+    isCrouching() {
+        return this.isKeyDown('KeyC') || this.isKeyDown('ControlLeft')
+            || this.gamepadCrouchHeld || this.touchCrouchHeld;
     }
 
     _shouldLockPointer() {

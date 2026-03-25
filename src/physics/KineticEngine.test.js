@@ -7,7 +7,18 @@ vi.mock('../core/InputManager.js', () => ({
     default: {
         isKeyDown: vi.fn(),
         getMouseDelta: vi.fn(),
-        isLocked: true
+        getMovementAxes: vi.fn(() => ({ x: 0, z: 0 })),
+        isCrouching: vi.fn(() => false),
+        isInputActive: vi.fn(() => true),
+        isLocked: true,
+        gamepadActive: false,
+        touchActive: false,
+        gamepadMove: { x: 0, z: 0 },
+        gamepadLook: { x: 0, y: 0 },
+        touchMove: { x: 0, z: 0 },
+        touchLook: { x: 0, y: 0 },
+        gamepadCrouchHeld: false,
+        touchCrouchHeld: false
     }
 }));
 
@@ -129,7 +140,7 @@ describe('KineticEngine', () => {
 
     it('should apply momentum surge boost to acceleration', () => {
         kineticEngine.setGrounded(true);
-        vi.spyOn(input, 'isKeyDown').mockImplementation((code) => code === 'KeyW');
+        vi.spyOn(input, 'getMovementAxes').mockReturnValue({ x: 0, z: -1 });
         const eventSpy = vi.spyOn(window, 'dispatchEvent');
 
         window.dispatchEvent(new CustomEvent('momentumSurge', { detail: { multiplier: 1.5, duration: 1 } }));

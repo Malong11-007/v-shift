@@ -105,7 +105,7 @@ export default class Player {
     }
 
     handleShoot() {
-        if (!this.isAlive || !input.isLocked) return;
+        if (!this.isAlive || !input.isInputActive()) return;
         // The WeaponSystem will actually handle guns/damage, but for now we dispatch an event
         window.dispatchEvent(new CustomEvent('playerFired'));
     }
@@ -287,9 +287,9 @@ export default class Player {
             return;
         }
 
-        // 1. Mouse Look
+        // 1. Mouse Look (includes gamepad + touch look)
         const mouseDelta = input.getMouseDelta();
-        if (input.isLocked) {
+        if (input.isInputActive()) {
             // Increased sensitivity for snappier feel
             this.yaw -= mouseDelta.x * this.sensitivity * 0.002;
             this.pitch -= mouseDelta.y * this.sensitivity * 0.002;

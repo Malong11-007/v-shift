@@ -111,14 +111,8 @@ export default class KineticEngine {
         const speedBoost = surgeActive ? this.surgeMultiplier : 1;
 
         // 1. Calculate input vector relative to camera yaw
-        let ix = 0;
-        let iz = 0;
-        if (input.isKeyDown('KeyW')) iz -= 1;
-        if (input.isKeyDown('KeyS')) iz += 1;
-        if (input.isKeyDown('KeyA')) ix -= 1;
-        if (input.isKeyDown('KeyD')) ix += 1;
-        
-        this.inputVector.set(ix, 0, iz).normalize();
+        const axes = input.getMovementAxes();
+        this.inputVector.set(axes.x, 0, axes.z).normalize();
 
         // Get camera forward (ignoring pitch)
         this.camera.getWorldDirection(this.camForward);
@@ -138,7 +132,7 @@ export default class KineticEngine {
         this.velocity.set(linvel.x, 0, linvel.z); // ignore Y for ground horizontal math
 
         // 3. Apply Sliding logic (Cinch Slide)
-        if (input.isKeyDown('KeyC') && this.isGrounded && this.velocity.length() > 5) {
+        if (input.isCrouching() && this.isGrounded && this.velocity.length() > 5) {
             if (!this.isSliding) {
                 audioManager.playSyntheticSfx('slide_start');
             }
