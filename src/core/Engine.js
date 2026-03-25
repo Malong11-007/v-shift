@@ -33,11 +33,12 @@ class Engine {
 
     init() {
         const canvas = this.getCanvas();
-        // 1. Renderer (enhanced)
-        this.renderer = new THREE.WebGLRenderer({ 
-            canvas: canvas, 
+        // 1. Renderer (enhanced for better graphics)
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
             antialias: true,
-            powerPreference: "high-performance"
+            powerPreference: "high-performance",
+            logarithmicDepthBuffer: true // Better depth precision for distant objects
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -48,7 +49,10 @@ class Engine {
 
         // Tone mapping for cinematic look
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.1;
+        this.renderer.toneMappingExposure = 1.3; // Slightly increased for brighter daytime look
+
+        // Physical lighting
+        this.renderer.physicallyCorrectLights = true;
 
         // 2. Scene
         this.scene = new THREE.Scene();
@@ -80,16 +84,17 @@ class Engine {
         const dirLight = new THREE.DirectionalLight(0xfff5e8, 3.0);
         dirLight.position.set(40, 80, 30);
         dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.mapSize.width = 4096; // Increased from 2048 for better quality
+        dirLight.shadow.mapSize.height = 4096;
         dirLight.shadow.camera.near = 0.5;
         dirLight.shadow.camera.far = 250;
         dirLight.shadow.camera.left = -60;
         dirLight.shadow.camera.right = 60;
         dirLight.shadow.camera.top = 60;
         dirLight.shadow.camera.bottom = -60;
-        dirLight.shadow.bias = -0.0005;
-        dirLight.shadow.normalBias = 0.02;
+        dirLight.shadow.bias = -0.0001; // Reduced for better shadow quality
+        dirLight.shadow.normalBias = 0.05;
+        dirLight.shadow.radius = 2; // Soft shadow edges
         this.scene.add(dirLight);
         this.dirLight = dirLight;
 
