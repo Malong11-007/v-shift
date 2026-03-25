@@ -144,4 +144,26 @@ describe('CompetitiveFlow', () => {
         // Round timer should be extended to at least the fuse time
         expect(roundManager.timer).toBeGreaterThanOrEqual(40);
     });
+
+    it('clamps team size to max 10 per side', () => {
+        flow.configureTeams({ attackers: 15, defenders: 20 });
+        expect(flow.teamSize[TEAMS.ATTACKERS]).toBe(10);
+        expect(flow.teamSize[TEAMS.DEFENDERS]).toBe(10);
+    });
+
+    it('clamps team size to min 1 per side', () => {
+        flow.configureTeams({ attackers: 0, defenders: -5 });
+        expect(flow.teamSize[TEAMS.ATTACKERS]).toBe(1);
+        expect(flow.teamSize[TEAMS.DEFENDERS]).toBe(1);
+    });
+
+    it('dispatches roundReset event on freeze time', () => {
+        flow.activate();
+        const spy = vi.spyOn(window, 'dispatchEvent');
+
+        roundManager.transition(ROUND_STATES.FREEZE_TIME);
+
+        const resetEvent = spy.mock.calls.find(call => call[0].type === 'roundReset');
+        expect(resetEvent).toBeDefined();
+    });
 });

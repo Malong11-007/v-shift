@@ -8,6 +8,7 @@ describe('RoundManager', () => {
         roundManager.overtime = false;
         roundManager.state = ROUND_STATES.FREEZE_TIME;
         roundManager.timer = 0;
+        roundManager.scores = { ATTACKERS: 0, DEFENDERS: 0 };
         vi.restoreAllMocks();
     });
 
@@ -54,7 +55,9 @@ describe('RoundManager', () => {
 
         const eventArgs = spy.mock.calls.find(call => call[0].type === 'roundEnded');
         expect(eventArgs).toBeDefined();
-        expect(eventArgs[0].detail).toEqual({ winner: 'ATTACKERS', reason: 'ELIMINATION' });
+        expect(eventArgs[0].detail.winner).toBe('ATTACKERS');
+        expect(eventArgs[0].detail.reason).toBe('ELIMINATION');
+        expect(eventArgs[0].detail.scores).toBeDefined();
     });
 
     it('should prevent ending a round if already in POST_ROUND', () => {
@@ -128,5 +131,42 @@ describe('RoundManager', () => {
 
         const matchEndedEvent = spy.mock.calls.find(call => call[0].type === 'matchEnded');
         expect(matchEndedEvent).toBeUndefined();
+    });
+
+    it('should track scores when endRound is called', () => {
+        roundManager.state = ROUND_STATES.LIVE;
+        roundManager.endRound('ATTACKERS', 'ELIMINATION');
+        expect(roundManager.scores.ATTACKERS).toBe(1);
+        expect(roundManager.scores.DEFENDERS).toBe(0);
+    });
+
+    it('should reset scores on startMatch', () => {
+        roundManager.scores = { ATTACKERS: 5, DEFENDERS: 3 };
+        roundManager.startMatch();
+        expect(roundManager.scores.ATTACKERS).toBe(0);
+        expect(roundManager.scores.DEFENDERS).toBe(0);
+    });
+
+    it('should dispatch scoresUpdated event when a round ends', () => {
+        const spy = vi.spyOn(window, 'dispatchEvent');
+        roundManager.state = ROUND_STATES.LIVE;
+        roundManager.endRound('DEFENDERS', 'TIME_EXPIRED');
+
+        const scoreEvent = spy.mock.calls.find(call => call[0].type === 'scoresUpdated');
+        expect(scoreEvent).toBeDefined();
+        expect(scoreEvent[0].detail.scores.DEFENDERS).toBe(1);
+    });
+
+    it('should fire matchEnded when a team reaches winsNeeded', () => {
+        const spy = vi.spyOn(window, 'dispatchEvent');
+        roundManager.scores = { ATTACKERS: 6, DEFENDERS: 3 };
+        roundManager.state = ROUND_STATES.LIVE;
+
+        roundManager.endRound('ATTACKERS', 'ELIMINATION');
+
+        const matchEndedEvent = spy.mock.calls.find(call => call[0].type === 'matchEnded');
+        expect(matchEndedEvent).toBeDefined();
+        expect(matchEndedEvent[0].detail.winner).toBe('ATTACKERS');
+        expect(matchEndedEvent[0].detail.scores.ATTACKERS).toBe(7);
     });
 });

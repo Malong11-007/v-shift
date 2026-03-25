@@ -57,32 +57,108 @@ class WeaponViewModel {
     }
 
     initArms() {
-        const skinMat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.7 });
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.7, metalness: 0.05 });
         const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
+        const gloveMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.85, metalness: 0.1 });
+        const watchMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.3, metalness: 0.8 });
+        const watchFaceMat = new THREE.MeshStandardMaterial({
+            color: 0x002200, emissive: 0x003300, emissiveIntensity: 0.4, roughness: 0.1
+        });
         
         // Right Arm
         this.rightArm = new THREE.Group();
-        const rForearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.2, 4, 8), sleeveMat);
-        rForearm.position.y = -0.1;
-        rForearm.rotation.x = Math.PI / 2.5;
-        this.rightArm.add(rForearm);
         
-        const rHand = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 0.04), skinMat);
-        rHand.position.set(0, -0.05, 0.1);
-        this.rightArm.add(rHand);
+        // Upper forearm (sleeved)
+        const rForearmUpper = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.12, 6, 10), sleeveMat);
+        rForearmUpper.position.y = -0.06;
+        rForearmUpper.rotation.x = Math.PI / 2.5;
+        this.rightArm.add(rForearmUpper);
+        
+        // Lower forearm (exposed skin)
+        const rForearmLower = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.1, 6, 10), skinMat);
+        rForearmLower.position.set(0, -0.04, 0.06);
+        rForearmLower.rotation.x = Math.PI / 3;
+        this.rightArm.add(rForearmLower);
+        
+        // Wrist
+        const rWrist = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.022, 0.03, 10), skinMat);
+        rWrist.position.set(0, -0.03, 0.09);
+        this.rightArm.add(rWrist);
+        
+        // Gloved hand
+        const rPalm = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.05, 0.04), gloveMat);
+        rPalm.position.set(0, -0.04, 0.1);
+        this.rightArm.add(rPalm);
+        
+        // Individual finger segments (4 fingers)
+        for (let i = 0; i < 4; i++) {
+            const finger = new THREE.Mesh(new THREE.BoxGeometry(0.009, 0.035, 0.012), gloveMat);
+            finger.position.set(-0.013 + i * 0.009, -0.055, 0.12);
+            finger.rotation.x = -0.2;
+            this.rightArm.add(finger);
+        }
+        
+        // Trigger finger (index — slightly forward)
+        const triggerFinger = new THREE.Mesh(new THREE.BoxGeometry(0.009, 0.04, 0.012), gloveMat);
+        triggerFinger.position.set(-0.013, -0.06, 0.125);
+        triggerFinger.rotation.x = -0.4;
+        this.rightArm.add(triggerFinger);
+        
+        // Thumb
+        const rThumb = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.03, 0.012), gloveMat);
+        rThumb.position.set(0.025, -0.04, 0.1);
+        rThumb.rotation.z = -0.3;
+        this.rightArm.add(rThumb);
+        
         this.armGroup.add(this.rightArm);
         
         // Left Arm
         this.leftArm = new THREE.Group();
-        const lForearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.2, 4, 8), sleeveMat);
-        lForearm.position.y = -0.1;
-        lForearm.rotation.x = Math.PI / 2.1;
-        lForearm.rotation.z = 0.4;
-        this.leftArm.add(lForearm);
         
-        const lHand = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.04), skinMat);
-        lHand.position.set(0, -0.03, 0.1);
-        this.leftArm.add(lHand);
+        const lForearmUpper = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.12, 6, 10), sleeveMat);
+        lForearmUpper.position.y = -0.06;
+        lForearmUpper.rotation.x = Math.PI / 2.1;
+        lForearmUpper.rotation.z = 0.4;
+        this.leftArm.add(lForearmUpper);
+        
+        const lForearmLower = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.1, 6, 10), skinMat);
+        lForearmLower.position.set(0, -0.03, 0.06);
+        lForearmLower.rotation.x = Math.PI / 2.5;
+        lForearmLower.rotation.z = 0.3;
+        this.leftArm.add(lForearmLower);
+        
+        // Wrist watch
+        const watchBody = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.02), watchMat);
+        watchBody.position.set(0, -0.02, 0.08);
+        this.leftArm.add(watchBody);
+        
+        const watchFace = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.005), watchFaceMat);
+        watchFace.position.set(0, -0.014, 0.08);
+        this.leftArm.add(watchFace);
+        
+        const watchBand = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.008, 0.035), watchMat);
+        watchBand.position.set(0, -0.025, 0.08);
+        this.leftArm.add(watchBand);
+        
+        // Left hand (palm)
+        const lPalm = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.035), gloveMat);
+        lPalm.position.set(0, -0.03, 0.1);
+        this.leftArm.add(lPalm);
+        
+        // Left fingers
+        for (let i = 0; i < 4; i++) {
+            const finger = new THREE.Mesh(new THREE.BoxGeometry(0.009, 0.03, 0.012), gloveMat);
+            finger.position.set(-0.012 + i * 0.009, -0.045, 0.115);
+            finger.rotation.x = -0.3;
+            this.leftArm.add(finger);
+        }
+        
+        // Left thumb
+        const lThumb = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.025, 0.012), gloveMat);
+        lThumb.position.set(0.024, -0.03, 0.1);
+        lThumb.rotation.z = -0.3;
+        this.leftArm.add(lThumb);
+        
         this.armGroup.add(this.leftArm);
     }
 

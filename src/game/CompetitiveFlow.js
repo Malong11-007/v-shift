@@ -58,8 +58,9 @@ export class CompetitiveFlow {
     }
 
     configureTeams({ attackers, defenders }) {
-        if (typeof attackers === 'number') this.teamSize[TEAMS.ATTACKERS] = attackers;
-        if (typeof defenders === 'number') this.teamSize[TEAMS.DEFENDERS] = defenders;
+        const MAX_TEAM_SIZE = 10;
+        if (typeof attackers === 'number') this.teamSize[TEAMS.ATTACKERS] = Math.min(Math.max(1, attackers), MAX_TEAM_SIZE);
+        if (typeof defenders === 'number') this.teamSize[TEAMS.DEFENDERS] = Math.min(Math.max(1, defenders), MAX_TEAM_SIZE);
         this.resetRoundState();
     }
 
@@ -108,6 +109,8 @@ export class CompetitiveFlow {
         if (state === ROUND_STATES.FREEZE_TIME) {
             this.economy.openBuyPhase(this.round.durations.FREEZE_TIME);
             this.resetRoundState();
+            // Signal all entities to reset for the new round
+            window.dispatchEvent(new CustomEvent('roundReset'));
         }
 
         if (state === ROUND_STATES.LIVE) {

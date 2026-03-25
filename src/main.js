@@ -81,12 +81,15 @@ const init = async () => {
         if (hudEl) hudEl.style.display = 'block';
         gameState.transition(STATES.PLAYING);
     } else {
-        // Spawn simple bots
-        window.bots = [
-            new Bot('bot_1', new THREE.Vector3(25, 2, -20)),
-            new Bot('bot_2', new THREE.Vector3(-25, 2, 0)),
-            new Bot('bot_3', new THREE.Vector3(0, 2, 25))
-        ];
+        // Configure team size from URL param (e.g. ?team=3 for 3v3, max 10v10)
+        const teamSize = Math.min(Math.max(1, parseInt(urlParams.get('team')) || 5), 10);
+        competitiveFlow.configureTeams({ attackers: teamSize, defenders: teamSize });
+
+        // Spawn bots based on configured defender team size
+        const botSpawns = arena.getBotSpawns(teamSize);
+        window.bots = botSpawns.map((pos, i) =>
+            new Bot(`bot_${i + 1}`, pos)
+        );
         // Don't transition here yet, wait for assets to load fully.
     }
     window.bots.forEach(bot => engine.addUpdatable(bot));
@@ -102,12 +105,14 @@ const init = async () => {
     engine.start();
     console.log('[main.js] Render loop started. Game is LIVE.');
     
-    // Ambient audio on game state change
+    // Ambient audio on game state change + render throttle
     window.addEventListener('gameStateChange', (e) => {
         if (e.detail.current === 'PLAYING') {
             audioManager.playAmbient();
+            engine.setFullSpeed(true);
         } else {
             audioManager.stopAmbient();
+            engine.setFullSpeed(false);
         }
     });
     
