@@ -21,13 +21,25 @@ class RoundManager {
         this.maxRounds = 13; // First to 7
         this.overtime = false;
         
-        // Add tick method to engine if needed, but usually we just update this via a Game Loop
+        // Team Score Tracking
+        this.scores = {
+            ATTACKERS: 0,
+            DEFENDERS: 0
+        };
+        this.winsNeeded = Math.ceil(this.maxRounds / 2);
     }
 
     startMatch() {
         this.currentRound = 1;
         this.overtime = false;
+        this.resetScores();
         this.startRound();
+    }
+
+    resetScores() {
+        this.scores = { ATTACKERS: 0, DEFENDERS: 0 };
+        this.winsNeeded = Math.ceil(this.maxRounds / 2);
+        window.dispatchEvent(new CustomEvent('scoresUpdated', { detail: { scores: { ...this.scores } } }));
     }
 
     startRound() {
@@ -38,8 +50,24 @@ class RoundManager {
     endRound(winningTeam, reason) {
         if (this.state === ROUND_STATES.POST_ROUND) return;
         
-        console.log(`Round ${this.currentRound} Over. Winner: ${winningTeam} (${reason})`);
-        window.dispatchEvent(new CustomEvent('roundEnded', { detail: { winner: winningTeam, reason } }));
+        // Track score
+        if (winningTeam && this.scores[winningTeam] !== undefined) {
+            this.scores[winningTeam]++;
+        }
+        
+        console.log(`Round ${this.currentRound} Over. Winner: ${winningTeam} (${reason}) | Score: ATK ${this.scores.ATTACKERS} - DEF ${this.scores.DEFENDERS}`);
+        window.dispatchEvent(new CustomEvent('roundEnded', { detail: { winner: winningTeam, reason, scores: { ...this.scores } } }));
+        window.dispatchEvent(new CustomEvent('scoresUpdated', { detail: { scores: { ...this.scores } } }));
+        
+        // Check for match win (first to winsNeeded)
+        if (this.scores[winningTeam] >= this.winsNeeded) {
+            this.transition(ROUND_STATES.POST_ROUND);
+            console.log(`[RoundManager] Match won by ${winningTeam}!`);
+            window.dispatchEvent(new CustomEvent('matchEnded', {
+                detail: { finalRound: this.currentRound, winner: winningTeam, scores: { ...this.scores } }
+            }));
+            return;
+        }
         
         this.transition(ROUND_STATES.POST_ROUND);
     }

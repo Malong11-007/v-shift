@@ -22,7 +22,7 @@ class HUD {
         // 3. Round Info (Top Center)
         this.roundInfo = document.createElement('div');
         this.applyRoundStyles(this.roundInfo);
-        this.roundInfo.innerHTML = `<span>ROUND 1</span><div id="round-timer">1:45</div>`;
+        this.roundInfo.innerHTML = `<span id="hud-score-atk" style="color:#ff4444;margin-right:10px">0</span><span>ROUND 1</span><span id="hud-score-def" style="color:#4488ff;margin-left:10px">0</span><div id="round-timer">1:45</div>`;
         this.container.appendChild(this.roundInfo);
 
         // 4. Hit Marker
@@ -263,6 +263,19 @@ class HUD {
 
         window.addEventListener('momentumSurgeUpdate', (e) => this.renderSurgeMeter(e.detail));
         window.addEventListener('momentumSurgeExpired', () => this.hideSurgeMeter());
+
+        window.addEventListener('scoresUpdated', (e) => {
+            const scores = e.detail.scores;
+            const atkEl = document.getElementById('hud-score-atk');
+            const defEl = document.getElementById('hud-score-def');
+            if (atkEl) atkEl.innerText = scores.ATTACKERS;
+            if (defEl) defEl.innerText = scores.DEFENDERS;
+        });
+
+        window.addEventListener('roundStarted', (e) => {
+            const roundSpan = this.roundInfo.querySelector('span:nth-child(2)');
+            if (roundSpan) roundSpan.innerText = `ROUND ${e.detail.round}`;
+        });
     }
 
     show() { this.container.style.display = 'block'; }

@@ -27,6 +27,7 @@ export default class Bot {
         this.lastShotTime = 0;
         this.fireRate = 400; // ms
         this.spawnProtectionUntil = performance.now() + 2000;
+        this.spawnPos = startPos.clone();
 
         // Visuals
         this.group = new THREE.Group();
@@ -40,6 +41,10 @@ export default class Bot {
         this.initVisuals();
         this.initPhysics(startPos);
         this.createHealthBar();
+        
+        // Listen for round resets in competitive mode
+        this._onRoundReset = () => this.resetForRound();
+        window.addEventListener('roundReset', this._onRoundReset);
         
         // Register to engine loop
         engine.updatables.push(this);
@@ -213,19 +218,21 @@ export default class Bot {
         
         this.ragdoll = new Ragdoll(this.group, dir, force);
         
-        // Dispatch kill event (already handled by WeaponSystem for local player hits, 
-        // but we keep this if bots kill each other in the future)
-        // We will remove the redundant event dispatch here since WeaponSystem does it.
-        // Or keep it for generic deaths not caused by WeaponSystem.
-        
-        // Simple respawn logic after 5s
-        setTimeout(() => this.respawn(), 5000);
+        // In competitive rounds (LIVE state), stay dead until next round.
+        // In other modes (deathmatch, etc.), auto-respawn after 5s.
+        if (roundManager.state === ROUND_STATES.LIVE) {
+            // Dead until roundReset event fires at next round start
+            this.pendingRespawn = true;
+        } else {
+            setTimeout(() => this.respawn(), 5000);
+        }
     }
 
     respawn() {
         this.health = 100;
         this.state = BOT_STATES.PATROL;
         this.spawnProtectionUntil = performance.now() + 2000;
+        this.pendingRespawn = false;
         
         // Reset visuals
         if (this.mesh) this.mesh.visible = true;
@@ -241,6 +248,19 @@ export default class Bot {
         this.initPhysics(point);
         this.group.position.copy(point);
         this.updateHealthBar();
+    }
+
+    resetForRound() {
+        // Called at the start of each new round to fully reset the bot
+        this.respawn();
+        // Move to original spawn position for consistent round starts
+        const point = arena.getBotSpawn();
+        if (this.body && physics.world) {
+            physics.world.removeRigidBody(this.body);
+            this.body = null;
+        }
+        this.initPhysics(point);
+        this.group.position.copy(point);
     }
 
     update(dt) {

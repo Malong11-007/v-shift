@@ -8,14 +8,26 @@ class Arena {
             player: [
                 new THREE.Vector3(-35, 1, 0),
                 new THREE.Vector3(-35, 1, 5),
-                new THREE.Vector3(-35, 1, -5)
+                new THREE.Vector3(-35, 1, -5),
+                new THREE.Vector3(-35, 1, 10),
+                new THREE.Vector3(-35, 1, -10),
+                new THREE.Vector3(-38, 1, 3),
+                new THREE.Vector3(-38, 1, -3),
+                new THREE.Vector3(-38, 1, 8),
+                new THREE.Vector3(-38, 1, -8),
+                new THREE.Vector3(-32, 1, 0)
             ],
             bots: [
                 new THREE.Vector3(35, 1, 0),
                 new THREE.Vector3(35, 1, 10),
                 new THREE.Vector3(35, 1, -10),
                 new THREE.Vector3(25, 1, 25),
-                new THREE.Vector3(25, 1, -25)
+                new THREE.Vector3(25, 1, -25),
+                new THREE.Vector3(38, 1, 5),
+                new THREE.Vector3(38, 1, -5),
+                new THREE.Vector3(38, 1, 15),
+                new THREE.Vector3(38, 1, -15),
+                new THREE.Vector3(32, 1, 0)
             ],
             bombSites: {
                 A: new THREE.Vector3(0, 1, 20),
@@ -102,6 +114,28 @@ class Arena {
 
     getBotSpawn() {
         return this.spawnPoints.bots[Math.floor(Math.random() * this.spawnPoints.bots.length)];
+    }
+
+    getPlayerSpawns(count) {
+        const spawns = [];
+        const available = [...this.spawnPoints.player];
+        const n = Math.min(count, available.length);
+        for (let i = 0; i < n; i++) {
+            const idx = Math.floor(Math.random() * available.length);
+            spawns.push(available.splice(idx, 1)[0]);
+        }
+        return spawns;
+    }
+
+    getBotSpawns(count) {
+        const spawns = [];
+        const available = [...this.spawnPoints.bots];
+        const n = Math.min(count, available.length);
+        for (let i = 0; i < n; i++) {
+            const idx = Math.floor(Math.random() * available.length);
+            spawns.push(available.splice(idx, 1)[0]);
+        }
+        return spawns;
     }
 }
 
