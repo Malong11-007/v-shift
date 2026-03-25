@@ -13,6 +13,13 @@ class Engine {
         this.updateCallbacks = [];
         this.isRunning = false;
         this.timeScale = 1.0;
+
+        // When true, tick() runs fully every frame (PLAYING state).
+        // When false, only renders every _menuFrameInterval ms so the
+        // main thread stays free for UI interactions.
+        this._fullSpeed = false;
+        this._lastMenuRender = 0;
+        this._menuFrameInterval = 200; // ms between renders in menu mode
         
         this.init();
     }
@@ -73,8 +80,8 @@ class Engine {
         const dirLight = new THREE.DirectionalLight(0xffe8d0, 1.8);
         dirLight.position.set(40, 80, 30);
         dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 4096;
-        dirLight.shadow.mapSize.height = 4096;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
         dirLight.shadow.camera.near = 0.5;
         dirLight.shadow.camera.far = 250;
         dirLight.shadow.camera.left = -60;
@@ -130,6 +137,16 @@ class Engine {
         this.updatables = this.updatables.filter(u => u !== obj);
     }
 
+    /**
+     * Switch between full-speed rendering (during gameplay) and
+     * throttled rendering (during menus).  Throttled mode only
+     * renders every _menuFrameInterval ms, keeping the main thread
+     * free so DOM interactions remain responsive.
+     */
+    setFullSpeed(enabled) {
+        this._fullSpeed = enabled;
+    }
+
     start() {
         if (this.isRunning) return;
         this.isRunning = true;
@@ -143,6 +160,15 @@ class Engine {
     }
 
     tick() {
+        // In menu mode, skip rendering entirely to keep the main
+        // thread free for UI interactions.  Menu screens are opaque
+        // overlays so the 3D scene is not visible anyway.
+        if (!this._fullSpeed) {
+            // Still consume the clock delta so it doesn't accumulate
+            this.clock.getDelta();
+            return;
+        }
+
         // Apply time scale to delta
         const delta = this.clock.getDelta() * this.timeScale;
         

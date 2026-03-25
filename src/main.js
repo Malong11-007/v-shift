@@ -105,12 +105,14 @@ const init = async () => {
     engine.start();
     console.log('[main.js] Render loop started. Game is LIVE.');
     
-    // Ambient audio on game state change
+    // Ambient audio on game state change + render throttle
     window.addEventListener('gameStateChange', (e) => {
         if (e.detail.current === 'PLAYING') {
             audioManager.playAmbient();
+            engine.setFullSpeed(true);
         } else {
             audioManager.stopAmbient();
+            engine.setFullSpeed(false);
         }
     });
     
