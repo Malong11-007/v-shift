@@ -60,8 +60,8 @@ class ModeSelect {
 
         // CREATE CARDS
         this.createCard(
-            'SOLO TRAINING', 
-            'Play offline against AI bots. Perfect for honing your movement and aim.',
+            'SOLO TRAINING',
+            'Full 5v5 match with AI bots on both teams. Perfect for practicing tactics and gameplay.',
             'DEPLOY NOW',
             () => {
                 matchManager.setMode(GAME_MODES.DEATHMATCH); // Or solo mode

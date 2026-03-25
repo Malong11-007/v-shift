@@ -33,11 +33,12 @@ class Engine {
 
     init() {
         const canvas = this.getCanvas();
-        // 1. Renderer (enhanced)
-        this.renderer = new THREE.WebGLRenderer({ 
-            canvas: canvas, 
+        // 1. Renderer (enhanced for better graphics)
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
             antialias: true,
-            powerPreference: "high-performance"
+            powerPreference: "high-performance",
+            logarithmicDepthBuffer: true // Better depth precision for distant objects
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -48,12 +49,15 @@ class Engine {
 
         // Tone mapping for cinematic look
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.1;
+        this.renderer.toneMappingExposure = 1.3; // Slightly increased for brighter daytime look
+
+        // Physical lighting
+        this.renderer.physicallyCorrectLights = true;
 
         // 2. Scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0f0f13);
-        this.scene.fog = new THREE.FogExp2(0x0f0f13, 0.012);
+        this.scene.background = new THREE.Color(0x87ceeb); // Sky blue for daytime
+        this.scene.fog = new THREE.FogExp2(0xb0c4de, 0.008); // Light blue fog, less dense
 
         // 3. Camera (FOV 90 for good competitive feel)
         this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -67,51 +71,66 @@ class Engine {
     }
 
     _setupLighting() {
-        // Hemisphere Light (sky/ground ambient fill)
-        const hemiLight = new THREE.HemisphereLight(0x3344aa, 0x111111, 0.4);
+        // Brighter Hemisphere Light (bright sky for daytime)
+        const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x444444, 0.8);
         hemiLight.position.set(0, 50, 0);
         this.scene.add(hemiLight);
 
-        // Ambient Light (base fill to prevent pure black shadows)
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
+        // Increased Ambient Light (much brighter base fill)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         this.scene.add(ambientLight);
 
-        // Primary Directional Light (sun/moon — warm key light)
-        const dirLight = new THREE.DirectionalLight(0xffe8d0, 1.8);
+        // Primary Directional Light (bright sun - increased intensity)
+        const dirLight = new THREE.DirectionalLight(0xfff5e8, 3.0);
         dirLight.position.set(40, 80, 30);
         dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.mapSize.width = 4096; // Increased from 2048 for better quality
+        dirLight.shadow.mapSize.height = 4096;
         dirLight.shadow.camera.near = 0.5;
         dirLight.shadow.camera.far = 250;
         dirLight.shadow.camera.left = -60;
         dirLight.shadow.camera.right = 60;
         dirLight.shadow.camera.top = 60;
         dirLight.shadow.camera.bottom = -60;
-        dirLight.shadow.bias = -0.0005;
-        dirLight.shadow.normalBias = 0.02;
+        dirLight.shadow.bias = -0.0001; // Reduced for better shadow quality
+        dirLight.shadow.normalBias = 0.05;
+        dirLight.shadow.radius = 2; // Soft shadow edges
         this.scene.add(dirLight);
         this.dirLight = dirLight;
 
-        // Secondary fill light (cool blue rim light from opposite side)
-        const fillLight = new THREE.DirectionalLight(0x4488cc, 0.5);
+        // Secondary fill light (brighter cool blue rim light)
+        const fillLight = new THREE.DirectionalLight(0x88bbff, 1.2);
         fillLight.position.set(-30, 40, -20);
         this.scene.add(fillLight);
 
-        // Rim / Back light for character separation (subtle warm kick from behind)
-        const rimLight = new THREE.DirectionalLight(0xffcc88, 0.3);
+        // Rim / Back light for character separation (brighter warm kick)
+        const rimLight = new THREE.DirectionalLight(0xffdd99, 0.8);
         rimLight.position.set(-10, 20, -50);
         this.scene.add(rimLight);
 
-        // Bomb site A ambient glow
-        const siteALight = new THREE.PointLight(0xff4400, 0.6, 25, 2);
+        // Additional overhead light for even illumination
+        const topLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        topLight.position.set(0, 100, 0);
+        this.scene.add(topLight);
+
+        // Bomb site A ambient glow (brighter)
+        const siteALight = new THREE.PointLight(0xff4400, 1.2, 30, 2);
         siteALight.position.set(0, 3, 20);
         this.scene.add(siteALight);
 
-        // Bomb site B ambient glow
-        const siteBLight = new THREE.PointLight(0x0044ff, 0.6, 25, 2);
+        // Bomb site B ambient glow (brighter)
+        const siteBLight = new THREE.PointLight(0x0044ff, 1.2, 30, 2);
         siteBLight.position.set(0, 3, -20);
         this.scene.add(siteBLight);
+
+        // Additional area lights for better coverage
+        const areaLight1 = new THREE.PointLight(0xffffff, 1.0, 50, 2);
+        areaLight1.position.set(20, 10, 0);
+        this.scene.add(areaLight1);
+
+        const areaLight2 = new THREE.PointLight(0xffffff, 1.0, 50, 2);
+        areaLight2.position.set(-20, 10, 0);
+        this.scene.add(areaLight2);
     }
 
     onWindowResize() {

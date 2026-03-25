@@ -3,7 +3,7 @@ import engine from '../core/Engine.js';
 import audioManager from '../core/AudioManager.js';
 import gameState, { STATES } from '../core/GameState.js';
 
-const SPIKE_STATE = {
+export const SPIKE_STATE = {
     IDLE: 'IDLE',           // Being carried
     PLANTING: 'PLANTING',   // Planting in progress
     PLANTED: 'PLANTED',     // Ticking down
@@ -13,9 +13,9 @@ const SPIKE_STATE = {
 };
 
 // Spike sites in the arena
-const SPIKE_SITES = [
-    { name: 'A', position: new THREE.Vector3(-20, 0.05, -15), radius: 5 },
-    { name: 'B', position: new THREE.Vector3(20, 0.05, 15), radius: 5 }
+export const SPIKE_SITES = [
+    { name: 'A', position: new THREE.Vector3(0, 1, 20), radius: 5 },
+    { name: 'B', position: new THREE.Vector3(0, 1, -20), radius: 5 }
 ];
 
 export default class Spike {
@@ -373,5 +373,3 @@ export default class Spike {
         this.fuseDisplay.style.display = 'none';
     }
 }
-
-export { SPIKE_STATE, SPIKE_SITES };

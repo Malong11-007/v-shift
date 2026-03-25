@@ -37,13 +37,42 @@ class Arena {
     }
 
     init() {
-        // Materials (enhanced PBR)
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.85, metalness: 0.05 });
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5, metalness: 0.1 });
-        const trimMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 0.3, roughness: 0.2, metalness: 0.5 });
-        const coverMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.6, metalness: 0.1 });
-        const siteAMat = new THREE.MeshStandardMaterial({ color: 0x443322, roughness: 0.7, metalness: 0.1 });
-        const siteBMat = new THREE.MeshStandardMaterial({ color: 0x222244, roughness: 0.7, metalness: 0.1 });
+        // Materials (enhanced PBR with better properties)
+        const floorMat = new THREE.MeshStandardMaterial({
+            color: 0x1a1a1a,
+            roughness: 0.75,
+            metalness: 0.1,
+            envMapIntensity: 0.5
+        });
+        const wallMat = new THREE.MeshStandardMaterial({
+            color: 0x2a2a2a,
+            roughness: 0.6,
+            metalness: 0.15,
+            envMapIntensity: 0.5
+        });
+        const trimMat = new THREE.MeshStandardMaterial({
+            color: 0x00f0ff,
+            emissive: 0x00f0ff,
+            emissiveIntensity: 0.4,
+            roughness: 0.15,
+            metalness: 0.7
+        });
+        const coverMat = new THREE.MeshStandardMaterial({
+            color: 0x3a3a3a,
+            roughness: 0.5,
+            metalness: 0.2,
+            envMapIntensity: 0.5
+        });
+        const siteAMat = new THREE.MeshStandardMaterial({
+            color: 0x554433,
+            roughness: 0.6,
+            metalness: 0.15
+        });
+        const siteBMat = new THREE.MeshStandardMaterial({
+            color: 0x333355,
+            roughness: 0.6,
+            metalness: 0.15
+        });
 
         // 1. Large Ground Plane (100x100) with grid texture effect
         const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100, 10, 10), floorMat);
