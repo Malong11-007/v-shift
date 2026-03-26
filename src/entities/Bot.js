@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import physics from '../physics/PhysicsWorld.js';
+import pathfindingManager from '../ai/PathfindingManager.js';
 import collision from '../physics/Collision.js';
 import arena from '../world/Arena.js';
 import engine from '../core/Engine.js';
@@ -42,10 +43,15 @@ export default class Bot {
         this.group = new THREE.Group();
         this.group.position.copy(startPos);
         engine.scene.add(this.group);
-        
+
         // Target tracking
         this.targetNode = null;
         this.playerTarget = null; // Set dynamically when player is in LOS
+
+        // Pathfinding properties
+        this.currentPath = null;
+        this.pathUpdateTimer = 0;
+        this.pathUpdateInterval = 0.5; // Update path every 0.5 seconds
 
         // Spike AI properties
         this.spikeCarrier = false; // Is this bot carrying the spike?
@@ -58,11 +64,11 @@ export default class Bot {
         this.initVisuals();
         this.initPhysics(startPos);
         this.createHealthBar();
-        
+
         // Listen for round resets in competitive mode
         this._onRoundReset = () => this.resetForRound();
         window.addEventListener('roundReset', this._onRoundReset);
-        
+
         // Register to engine loop
         engine.updatables.push(this);
     }
@@ -341,12 +347,48 @@ export default class Bot {
     }
 
     moveTowards(targetPos, dt) {
-        // Simple movement towards target position
-        const dir = new THREE.Vector3().subVectors(targetPos, this.group.position);
+        // Update path periodically or if we don't have one
+        this.pathUpdateTimer += dt;
+        if (!this.currentPath || this.pathUpdateTimer >= this.pathUpdateInterval) {
+            this.pathUpdateTimer = 0;
+
+            // Try to use pathfinding if available
+            if (pathfindingManager.isReady()) {
+                this.currentPath = pathfindingManager.findSmoothPath(
+                    this.group.position,
+                    targetPos
+                );
+            }
+
+            // Fallback to direct line if pathfinding unavailable or failed
+            if (!this.currentPath || this.currentPath.length === 0) {
+                this.currentPath = null;
+            }
+        }
+
+        // Determine next waypoint
+        let targetWaypoint = targetPos;
+        if (this.currentPath && this.currentPath.length > 0) {
+            const nextWaypoint = pathfindingManager.getNextWaypoint(
+                this.currentPath,
+                this.group.position,
+                2.0
+            );
+            if (nextWaypoint) {
+                targetWaypoint = nextWaypoint;
+            }
+        }
+
+        // Move towards the target waypoint
+        const dir = new THREE.Vector3().subVectors(targetWaypoint, this.group.position);
         dir.y = 0;
         const distance = dir.length();
 
-        if (distance < 1) return true; // Reached destination
+        if (distance < 1) {
+            // Reached destination
+            this.currentPath = null;
+            return true;
+        }
 
         dir.normalize();
 
@@ -357,7 +399,7 @@ export default class Bot {
         this.body.setLinvel(vel, true);
 
         // Look at target
-        const lookTarget = new THREE.Vector3(targetPos.x, this.group.position.y, targetPos.z);
+        const lookTarget = new THREE.Vector3(targetWaypoint.x, this.group.position.y, targetWaypoint.z);
         this.group.lookAt(lookTarget);
 
         return false; // Not yet reached
