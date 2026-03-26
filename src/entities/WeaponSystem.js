@@ -182,6 +182,12 @@ export default class WeaponSystem {
             if (hitResult.collider) {
                 const entity = collision.colliderMap.get(hitResult.collider.handle);
                 if (entity && entity.takeDamage) {
+                    // Prevent friendly fire: player is on ATTACKERS team
+                    if (entity.team && entity.team === 'ATTACKERS') {
+                        window.dispatchEvent(new CustomEvent('hitMarker', { detail: { type: 'wall', damage: 0 } }));
+                        return;
+                    }
+
                     const damage = this.currentWeapon.damage.slash;
                     const oldHealth = entity.health;
                     entity.takeDamage(damage, false, {
@@ -199,6 +205,7 @@ export default class WeaponSystem {
                                 weaponId: this.currentWeapon.id,
                                 isHeadshot: false,
                                 victimId: entity.id || 'Unknown',
+                                victimTeam: entity.team || 'DEFENDERS',
                                 killerIsLocal: true,
                                 killerSliding: ke.isSliding,
                                 killerAirborne: !ke.isGrounded,
@@ -226,6 +233,13 @@ export default class WeaponSystem {
         if (hitResult.collider) {
             const entity = collision.colliderMap.get(hitResult.collider.handle);
             if (entity && entity.takeDamage) {
+                // Prevent friendly fire: player is on ATTACKERS team
+                if (entity.team && entity.team === 'ATTACKERS') {
+                    // Friendly - show wall hit marker and skip damage
+                    window.dispatchEvent(new CustomEvent('hitMarker', { detail: { type: 'wall', damage: 0 } }));
+                    return;
+                }
+
                 // If the hit point is very high on the capsule, it's a headshot
                 isHeadshot = hitResult.point.y > entity.group.position.y + 0.8;
                 
@@ -262,6 +276,7 @@ export default class WeaponSystem {
                             weaponId: this.currentWeapon.id,
                             isHeadshot: isHeadshot,
                             victimId: entity.id || 'Unknown',
+                            victimTeam: entity.team || 'DEFENDERS',
                             killerIsLocal: true,
                             killerSliding: ke.isSliding,
                             killerAirborne: !ke.isGrounded,

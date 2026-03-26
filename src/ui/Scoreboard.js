@@ -15,7 +15,7 @@ class Scoreboard {
         this.container.style.justifyContent = 'center';
         this.container.style.alignItems = 'center';
         this.container.style.color = '#fff';
-        this.container.style.fontFamily = 'Inter, sans-serif';
+        this.container.style.fontFamily = '"Outfit", "Inter", sans-serif';
         this.container.style.zIndex = '3000';
         this.container.style.pointerEvents = 'auto';
 
@@ -43,8 +43,17 @@ class Scoreboard {
         this.button.style.backgroundColor = '#00f0ff';
         this.button.style.color = '#000';
         this.button.style.border = 'none';
-        this.button.style.borderRadius = '4px';
+        this.button.style.borderRadius = '12px';
         this.button.style.cursor = 'pointer';
+        this.button.style.transition = 'transform 0.15s, box-shadow 0.15s';
+        this.button.addEventListener('mouseenter', () => {
+            this.button.style.transform = 'scale(1.05)';
+            this.button.style.boxShadow = '0 0 20px rgba(0,240,255,0.5)';
+        });
+        this.button.addEventListener('mouseleave', () => {
+            this.button.style.transform = 'scale(1)';
+            this.button.style.boxShadow = 'none';
+        });
         this.button.addEventListener('click', () => {
             gameState.transition(STATES.MAIN_MENU);
         });
@@ -72,9 +81,12 @@ class Scoreboard {
                  card.style.backgroundColor = 'rgba(0, 240, 255, 0.1)';
                  card.style.border = '2px solid #00f0ff';
                  card.style.padding = '20px';
-                 card.style.borderRadius = '8px';
+                 card.style.borderRadius = '12px';
                  card.style.textAlign = 'center';
                  card.style.minWidth = '180px';
+                 card.style.transition = 'transform 0.2s';
+                 card.addEventListener('mouseenter', () => { card.style.transform = 'translateY(-4px)'; });
+                 card.addEventListener('mouseleave', () => { card.style.transform = 'translateY(0)'; });
                  
                  card.innerHTML = `
                     <div style="font-size: 40px; margin-bottom: 10px;">${award.icon}</div>

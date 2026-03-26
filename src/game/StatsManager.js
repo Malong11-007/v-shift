@@ -11,15 +11,40 @@ class StatsManager {
         this.maxBhopChain = 0;
         this.shotsFired = 0;
         this.shotsHit = 0;
+
+        // Per-player scoreboard tracking: { id: { kills, deaths, team } }
+        this.playerStats = {};
+    }
+
+    ensurePlayer(id, team) {
+        if (!this.playerStats[id]) {
+            this.playerStats[id] = { kills: 0, deaths: 0, team: team || 'UNKNOWN' };
+        }
+    }
+
+    getScoreboard() {
+        return { ...this.playerStats };
     }
 
     bindEvents() {
         window.addEventListener('playerKilled', (e) => {
             const data = e.detail;
+
+            // Track victim death
+            if (data.victimId) {
+                this.ensurePlayer(data.victimId, data.victimTeam);
+                this.playerStats[data.victimId].deaths++;
+            }
+
             if (data.killerIsLocal) {
                 this.kills++;
                 if (data.isHeadshot) this.headshotKills++;
                 if (data.weaponId === 'KNIFE') this.knifeKills++;
+
+                // Track local player kills in scoreboard
+                const localId = (window.localPlayer && window.localPlayer.id) || 'YOU';
+                this.ensurePlayer(localId, 'ATTACKERS');
+                this.playerStats[localId].kills++;
             }
         });
 
@@ -36,6 +61,14 @@ class StatsManager {
                 this.shotsHit++;
             }
         });
+    }
+
+    initPlayers(bots, localPlayerId) {
+        // Register all players for scoreboard at match start
+        this.ensurePlayer(localPlayerId, 'ATTACKERS');
+        for (const bot of bots) {
+            this.ensurePlayer(bot.id, bot.team);
+        }
     }
 
     calculateAwards() {

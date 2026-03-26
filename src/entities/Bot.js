@@ -61,6 +61,11 @@ export default class Bot {
         this.spikeDecisionTimer = 0; // Cooldown for spike decisions
         this.moveToSiteTimer = 0; // Time spent moving to site
 
+        // Patrol/roaming properties
+        this.patrolTarget = null; // Current roam destination
+        this.patrolTimer = 0;     // Time since last patrol decision
+        this.patrolInterval = 2 + Math.random() * 3; // Re-evaluate every 2-5s
+
         this.initVisuals();
         this.initPhysics(startPos);
         this.createHealthBar();
@@ -216,13 +221,43 @@ export default class Bot {
     die() {
         this.state = BOT_STATES.DEAD;
         
+        // Dispatch kill event so CompetitiveFlow can track team eliminations
+        window.dispatchEvent(new CustomEvent('playerKilled', {
+            detail: {
+                victimId: this.id,
+                victimTeam: this.team,
+                weaponId: (this.lastDamageContext && this.lastDamageContext.weaponId) || 'Unknown',
+                isHeadshot: false,
+                killerIsLocal: false
+            }
+        }));
+
+        // Drop spike if carrier dies
+        if (this.spikeCarrier && window.spike) {
+            this.spikeCarrier = false;
+            // Reassign spike to another alive attacker bot, or let player pick it up
+            const aliveAttackers = (window.bots || []).filter(
+                b => b !== this && b.team === BOT_TEAMS.ATTACKERS && b.state !== BOT_STATES.DEAD
+            );
+            if (aliveAttackers.length > 0) {
+                const newCarrier = aliveAttackers[Math.floor(Math.random() * aliveAttackers.length)];
+                newCarrier.spikeCarrier = true;
+                window.spike.assignCarrier(newCarrier);
+                console.log(`[Bot ${this.id}] Dropped spike → reassigned to ${newCarrier.id}`);
+            } else {
+                // No bots alive — player can pick it up (spike stays IDLE with no carrier)
+                window.spike.carrier = null;
+                console.log(`[Bot ${this.id}] Dropped spike → available for player pickup`);
+            }
+        }
+
         // Remove physics
         if (this.body && physics.world) {
             physics.world.removeRigidBody(this.body);
             this.body = null;
         }
         
-        // Wait, if we spawn a Ragdoll, we want to hide the original procedural mesh
+        // Hide the original procedural mesh for ragdoll
         if (this.mesh) {
             this.mesh.visible = false;
         }
@@ -428,6 +463,45 @@ export default class Bot {
         }
     }
 
+    doPatrol(dt) {
+        if (!this.body) return;
+
+        this.patrolTimer += dt;
+
+        // Pick a new patrol destination periodically
+        if (!this.patrolTarget || this.patrolTimer >= this.patrolInterval) {
+            this.patrolTimer = 0;
+            this.patrolInterval = 2 + Math.random() * 3;
+
+            // Roam towards a strategic area: bomb sites, mid map, or random position
+            const destinations = [
+                new THREE.Vector3(0, 1, 20),   // Site A
+                new THREE.Vector3(0, 1, -20),  // Site B
+                new THREE.Vector3(0, 1, 0),    // Mid
+                new THREE.Vector3(-20 + Math.random() * 40, 1, -20 + Math.random() * 40) // Random
+            ];
+            this.patrolTarget = destinations[Math.floor(Math.random() * destinations.length)];
+        }
+
+        // Move towards patrol target
+        const reached = this.moveTowards(this.patrolTarget, dt);
+        if (reached) {
+            this.patrolTarget = null;
+        }
+
+        // Update animation
+        if (this.animator) {
+            const vel = this.body.linvel();
+            const speedSq = vel.x * vel.x + vel.z * vel.z;
+            if (speedSq > 0.25) {
+                this.animator.setState('WALK');
+            } else {
+                this.animator.setState('IDLE');
+            }
+            this.animator.update(dt);
+        }
+    }
+
     update(dt) {
         if (this.state === BOT_STATES.DEAD) return;
         if (!this.body) return;
@@ -438,7 +512,15 @@ export default class Bot {
 
         // Don't run AI unless the game is actively being played
         if (gameState.currentState !== STATES.PLAYING) return;
-        if (roundManager.state !== ROUND_STATES.LIVE) return;
+
+        // During freeze time, zero horizontal velocity so bots don't float/slide
+        if (roundManager.state !== ROUND_STATES.LIVE) {
+            if (this.body) {
+                const v = this.body.linvel();
+                this.body.setLinvel({ x: 0, y: v.y, z: 0 }, true);
+            }
+            return;
+        }
 
         if (!this.strafeTimer) this.strafeTimer = 0;
         this.strafeTimer += dt;
@@ -540,6 +622,7 @@ export default class Bot {
         if (targets.length === 0) {
             this.state = BOT_STATES.PATROL;
             this.playerTarget = null;
+            this.doPatrol(dt);
             return;
         }
 
@@ -564,6 +647,7 @@ export default class Bot {
         // PERFORMANCE OPTIMIZATION: Skip expensive AI logic if target is too far
         if (closestDist > 35) {
             this.state = BOT_STATES.PATROL;
+            this.doPatrol(dt);
             return;
         }
 

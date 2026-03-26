@@ -35,7 +35,9 @@ class CharacterModel {
         this.hips.position.y = 0.9;
         this.root.add(this.hips);
 
-        const hipsMesh = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.22), this.pantsMat);
+        const hipsMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.16, 0.14, 0.16, CYLINDER_SEGMENTS), this.pantsMat
+        );
         this.hips.add(hipsMesh);
 
         // Belt
@@ -69,8 +71,10 @@ class CharacterModel {
         this.chest.position.y = 0.25;
         this.spine.add(this.chest);
 
-        // Base torso
-        const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.32, 0.22), this.clothesMat);
+        // Base torso (rounded for smoother silhouette)
+        const chestMesh = new THREE.Mesh(
+            new THREE.CapsuleGeometry(0.16, 0.1, 4, CYLINDER_SEGMENTS), this.clothesMat
+        );
         this.chest.add(chestMesh);
 
         // Tactical vest overlay (front plate)
@@ -130,8 +134,10 @@ class CharacterModel {
         this.head.position.y = 0.1;
         this.neck.add(this.head);
 
-        // Head base shape (slightly rounded with more detail)
-        const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.24, 0.23), this.skinMat);
+        // Head base shape (rounded capsule for smoother look)
+        const headMesh = new THREE.Mesh(
+            new THREE.CapsuleGeometry(0.11, 0.06, 4, CYLINDER_SEGMENTS), this.skinMat
+        );
         this.head.add(headMesh);
 
         // Jaw definition
@@ -152,9 +158,12 @@ class CharacterModel {
         nose.position.set(0, -0.01, 0.13);
         this.head.add(nose);
 
-        // Tactical Helmet (covers top and sides of head)
-        const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.16, 0.27), this.helmetMat);
-        helmet.position.y = 0.1;
+        // Tactical Helmet (smooth hemisphere shape)
+        const helmet = new THREE.Mesh(
+            new THREE.SphereGeometry(0.14, CYLINDER_SEGMENTS, 8, 0, Math.PI * 2, 0, Math.PI * 0.6),
+            this.helmetMat
+        );
+        helmet.position.y = 0.06;
         this.head.add(helmet);
 
         // Helmet brim (front edge)
