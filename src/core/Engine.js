@@ -6,7 +6,7 @@ class Engine {
         this.renderer = null;
         this.scene = null;
         this.camera = null;
-        this.clock = new THREE.Clock();
+        this.clock = new THREE.Timer();
         
         // Modules that need updating
         this.updatables = [];
@@ -50,9 +50,6 @@ class Engine {
         // Tone mapping for cinematic look
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.3; // Slightly increased for brighter daytime look
-
-        // Physical lighting
-        this.renderer.physicallyCorrectLights = true;
 
         // 2. Scene
         this.scene = new THREE.Scene();
@@ -169,7 +166,6 @@ class Engine {
     start() {
         if (this.isRunning) return;
         this.isRunning = true;
-        this.clock.start();
         this.renderer.setAnimationLoop(this.tick.bind(this));
     }
 
@@ -179,12 +175,13 @@ class Engine {
     }
 
     tick() {
+        // Update the timer every frame so getDelta() is accurate
+        this.clock.update();
+
         // In menu mode, skip rendering entirely to keep the main
         // thread free for UI interactions.  Menu screens are opaque
         // overlays so the 3D scene is not visible anyway.
         if (!this._fullSpeed) {
-            // Still consume the clock delta so it doesn't accumulate
-            this.clock.getDelta();
             return;
         }
 
