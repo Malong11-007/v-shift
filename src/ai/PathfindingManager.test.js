@@ -33,9 +33,10 @@ describe('PathfindingManager', () => {
 
         const path = pathfindingManager.findPath(start, end);
 
-        // Path might be null if points are in obstacles, but should work for open areas
-        // Just verify the method doesn't throw
-        expect(path).toBeDefined();
+        // Points in open areas should produce a valid path (not null)
+        expect(path).not.toBeNull();
+        expect(Array.isArray(path)).toBe(true);
+        expect(path.length).toBeGreaterThan(0);
     });
 
     it('should find a smooth path', () => {
@@ -44,8 +45,24 @@ describe('PathfindingManager', () => {
 
         const path = pathfindingManager.findSmoothPath(start, end);
 
-        // Smooth path should have fewer waypoints than regular path
-        expect(path).toBeDefined();
+        // Smooth path should produce a valid path (not null)
+        expect(path).not.toBeNull();
+        expect(Array.isArray(path)).toBe(true);
+        expect(path.length).toBeGreaterThan(0);
+    });
+
+    it('should handle navigation group ID 0 correctly', () => {
+        // getGroup() can return 0 which is a valid group ID
+        // Before the fix, !0 === true would cause false "navigation groups" warnings
+        const start = new THREE.Vector3(-10, 0.1, -10);
+        const end = new THREE.Vector3(-15, 0.1, -15);
+
+        const warnSpy = vi.spyOn(console, 'warn');
+        pathfindingManager.findPath(start, end);
+
+        // Should not warn about missing navigation groups for valid positions
+        expect(warnSpy).not.toHaveBeenCalledWith('Could not find navigation groups for start/end positions');
+        warnSpy.mockRestore();
     });
 
     it('should detect obstacles correctly', () => {

@@ -20,7 +20,6 @@ import matchManager, { GAME_MODES } from './game/MatchManager.js';
 import competitiveFlow from './game/CompetitiveFlow.js';
 import hud from './ui/HUD.js';
 import uiManager from './ui/UIManager.js';
-import tutorial from './ui/Tutorial.js';
 import feedbackSystem from './game/FeedbackSystem.js';
 import Bot, { BOT_TEAMS } from './entities/Bot.js';
 import Spike from './entities/Spike.js';
@@ -85,7 +84,6 @@ const init = async () => {
         const player = window.localPlayer;
         if (player) {
             hud.update(player, dt);
-            tutorial.update(dt);
         }
     });
 
