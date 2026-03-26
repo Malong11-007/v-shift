@@ -32,9 +32,16 @@ class AmmoPhysics {
     async init() {
         if (this.initialized) return;
 
-        // Dynamically import Ammo.js
-        const AmmoLib = await import('ammo.js');
-        this.Ammo = await AmmoLib.default();
+        try {
+            // Dynamically import Ammo.js
+            const AmmoLib = await import('ammo.js');
+            // ammo.js may export a factory function (default) or already-resolved object
+            const AmmoFactory = AmmoLib.default;
+            this.Ammo = typeof AmmoFactory === 'function' ? await AmmoFactory() : AmmoFactory;
+        } catch (e) {
+            console.warn('AmmoPhysics: failed to load ammo.js, physics disabled:', e.message);
+            return;
+        }
 
         // Setup collision configuration
         const collisionConfiguration = new this.Ammo.btDefaultCollisionConfiguration();

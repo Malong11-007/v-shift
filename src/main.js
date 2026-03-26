@@ -40,8 +40,12 @@ const init = async () => {
     engine.addUpdatable(gamepadManager);
 
     // Initialize AmmoPhysics for enhanced physics features
-    await ammoPhysics.init();
-    engine.addUpdatable(ammoPhysics);
+    try {
+        await ammoPhysics.init();
+        engine.addUpdatable(ammoPhysics);
+    } catch (e) {
+        console.warn('[main.js] AmmoPhysics failed to initialize, continuing without it:', e.message);
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const isTestRoom = urlParams.has('test');
