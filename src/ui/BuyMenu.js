@@ -21,11 +21,13 @@ class BuyMenu {
         this.container.style.transform = 'translate(-50%, -50%)';
         this.container.style.backgroundColor = 'rgba(20, 20, 30, 0.9)';
         this.container.style.border = '2px solid #00f0ff';
+        this.container.style.borderRadius = '14px';
         this.container.style.padding = '20px';
         this.container.style.color = 'white';
-        this.container.style.fontFamily = 'monospace';
+        this.container.style.fontFamily = '"Outfit", monospace';
         this.container.style.zIndex = '1000';
         this.container.style.pointerEvents = 'auto';
+        this.container.style.backdropFilter = 'blur(10px)';
         
         const title = document.createElement('h2');
         title.innerText = 'BUY MENU [B]';
@@ -58,7 +60,9 @@ class BuyMenu {
             btn.style.backgroundColor = '#2a2a35';
             btn.style.color = 'white';
             btn.style.border = '1px solid #444';
+            btn.style.borderRadius = '8px';
             btn.style.cursor = 'pointer';
+            btn.style.transition = 'border-color 0.15s, transform 0.15s';
             
             btn.addEventListener('click', () => this.buyWeapon(weapon));
             this.grid.appendChild(btn);

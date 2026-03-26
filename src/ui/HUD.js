@@ -1,5 +1,7 @@
 import gameState, { STATES } from '../core/GameState.js';
 import radar from './Radar.js';
+import statsManager from '../game/StatsManager.js';
+import roundManager from '../game/RoundManager.js';
 
 class HUD {
     constructor() {
@@ -49,6 +51,10 @@ class HUD {
         this.scopeOverlay = this.createScopeOverlay();
         this.container.appendChild(this.scopeOverlay);
 
+        // 9. In-game Scoreboard (Tab key toggle)
+        this.scoreboardOverlay = this.createScoreboardOverlay();
+        this.container.appendChild(this.scoreboardOverlay);
+
         document.body.appendChild(this.container);
         
         this.initEventListeners();
@@ -73,10 +79,11 @@ class HUD {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
-            padding: '10px 20px',
+            padding: '12px 20px',
             backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            borderLeft: `4px solid ${color}`,
-            backdropFilter: 'blur(5px)',
+            borderLeft: `3px solid ${color}`,
+            borderRadius: '8px',
+            backdropFilter: 'blur(8px)',
             minWidth: '120px'
         });
         
@@ -106,9 +113,10 @@ class HUD {
             textAlign: 'center',
             fontSize: '14px',
             letterSpacing: '3px',
-            padding: '5px 30px',
+            padding: '8px 30px',
             backgroundColor: 'rgba(0,0,0,0.5)',
-            borderBottom: '2px solid rgba(255,255,255,0.1)'
+            borderBottom: '2px solid rgba(255,255,255,0.1)',
+            borderRadius: '0 0 12px 12px'
         });
     }
 
@@ -235,9 +243,10 @@ class HUD {
     addKillEntry(killer, victim, weapon) {
         const entry = document.createElement('div');
         entry.style.backgroundColor = 'rgba(0,0,0,0.6)';
-        entry.style.padding = '5px 15px';
+        entry.style.padding = '6px 15px';
         entry.style.fontSize = '12px';
         entry.style.borderRight = '3px solid #00f0ff';
+        entry.style.borderRadius = '6px 0 0 6px';
         entry.innerHTML = `<span style="color:#00f0ff">${killer}</span> [${weapon}] <span style="color:#ff3333">${victim}</span>`;
         
         this.killFeed.prepend(entry);
@@ -284,6 +293,20 @@ class HUD {
         window.addEventListener('scopeChanged', (e) => {
             this.setScopeVisible(e.detail.scoped);
         });
+
+        // Tab key: show/hide in-game scoreboard
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Tab' && gameState.currentState === STATES.PLAYING) {
+                e.preventDefault();
+                this.showScoreboard();
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Tab') {
+                e.preventDefault();
+                this.hideScoreboard();
+            }
+        });
     }
 
     show() { this.container.style.display = 'block'; }
@@ -318,6 +341,142 @@ class HUD {
         wrapper.style.display = 'none';
         fill.style.width = '0%';
         label.innerText = 'SURGE READY';
+    }
+
+    createScoreboardOverlay() {
+        const overlay = document.createElement('div');
+        overlay.id = 'scoreboard-overlay';
+        Object.assign(overlay.style, {
+            position: 'absolute',
+            top: '0', left: '0', width: '100%', height: '100%',
+            display: 'none',
+            justifyContent: 'center',
+            alignItems: 'center',
+            pointerEvents: 'none',
+            zIndex: '2000'
+        });
+
+        const panel = document.createElement('div');
+        panel.id = 'scoreboard-panel';
+        Object.assign(panel.style, {
+            width: '700px',
+            maxHeight: '80vh',
+            backgroundColor: 'rgba(10, 12, 18, 0.92)',
+            borderRadius: '16px',
+            border: '1px solid rgba(0, 240, 255, 0.2)',
+            backdropFilter: 'blur(12px)',
+            padding: '24px',
+            fontFamily: '"Outfit", "Inter", sans-serif',
+            color: '#fff',
+            overflow: 'auto'
+        });
+
+        // Header with scores
+        const header = document.createElement('div');
+        header.id = 'scoreboard-header';
+        Object.assign(header.style, {
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '24px',
+            marginBottom: '20px',
+            fontSize: '14px',
+            letterSpacing: '2px',
+            textTransform: 'uppercase'
+        });
+        header.innerHTML = `
+            <span style="color:#ff5555;font-size:28px;font-weight:900" id="sb-atk-score">0</span>
+            <span style="opacity:0.5;font-size:12px">ATTACKERS</span>
+            <span style="font-size:16px;opacity:0.3">|</span>
+            <span style="opacity:0.5;font-size:12px">DEFENDERS</span>
+            <span style="color:#5588ff;font-size:28px;font-weight:900" id="sb-def-score">0</span>
+        `;
+        panel.appendChild(header);
+
+        // Table body
+        const table = document.createElement('div');
+        table.id = 'scoreboard-table';
+        panel.appendChild(table);
+
+        overlay.appendChild(panel);
+        return overlay;
+    }
+
+    showScoreboard() {
+        const overlay = document.getElementById('scoreboard-overlay');
+        if (!overlay) return;
+        overlay.style.display = 'flex';
+
+        const scores = roundManager.scores || { ATTACKERS: 0, DEFENDERS: 0 };
+        const atkEl = document.getElementById('sb-atk-score');
+        const defEl = document.getElementById('sb-def-score');
+        if (atkEl) atkEl.innerText = scores.ATTACKERS;
+        if (defEl) defEl.innerText = scores.DEFENDERS;
+
+        const table = document.getElementById('scoreboard-table');
+        if (!table) return;
+        table.innerHTML = '';
+
+        const stats = statsManager.getScoreboard();
+        const attackers = [];
+        const defenders = [];
+
+        for (const [id, data] of Object.entries(stats)) {
+            if (data.team === 'ATTACKERS') attackers.push({ id, ...data });
+            else defenders.push({ id, ...data });
+        }
+
+        // Sort by kills descending
+        attackers.sort((a, b) => b.kills - a.kills);
+        defenders.sort((a, b) => b.kills - a.kills);
+
+        const renderTeam = (players, teamLabel, color) => {
+            const section = document.createElement('div');
+            section.style.marginBottom = '16px';
+
+            const teamHeader = document.createElement('div');
+            Object.assign(teamHeader.style, {
+                display: 'grid',
+                gridTemplateColumns: '1fr 60px 60px',
+                padding: '6px 12px',
+                fontSize: '11px',
+                letterSpacing: '2px',
+                opacity: '0.5',
+                borderBottom: `1px solid ${color}33`
+            });
+            teamHeader.innerHTML = `<span>${teamLabel}</span><span style="text-align:center">K</span><span style="text-align:center">D</span>`;
+            section.appendChild(teamHeader);
+
+            players.forEach(p => {
+                const row = document.createElement('div');
+                const isLocal = p.id === ((window.localPlayer && window.localPlayer.id) || 'YOU');
+                Object.assign(row.style, {
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 60px 60px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    borderRadius: '8px',
+                    backgroundColor: isLocal ? 'rgba(0, 240, 255, 0.08)' : 'transparent',
+                    borderLeft: isLocal ? '3px solid #00f0ff' : '3px solid transparent'
+                });
+                const nameColor = isLocal ? '#00f0ff' : '#ccc';
+                row.innerHTML = `
+                    <span style="color:${nameColor};font-weight:${isLocal ? '700' : '400'}">${p.id}${isLocal ? ' (YOU)' : ''}</span>
+                    <span style="text-align:center;font-weight:700">${p.kills}</span>
+                    <span style="text-align:center;opacity:0.6">${p.deaths}</span>
+                `;
+                section.appendChild(row);
+            });
+            table.appendChild(section);
+        };
+
+        renderTeam(attackers, 'ATTACKERS', '#ff5555');
+        renderTeam(defenders, 'DEFENDERS', '#5588ff');
+    }
+
+    hideScoreboard() {
+        const overlay = document.getElementById('scoreboard-overlay');
+        if (overlay) overlay.style.display = 'none';
     }
 
     createScopeOverlay() {

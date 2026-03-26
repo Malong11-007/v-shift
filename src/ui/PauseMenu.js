@@ -56,6 +56,7 @@ class PauseMenu {
         btn.style.backgroundColor = 'transparent';
         btn.style.color = color;
         btn.style.border = `2px solid ${color}`;
+        btn.style.borderRadius = '10px';
         btn.style.cursor = 'pointer';
         btn.style.letterSpacing = '2px';
         btn.style.transition = 'all 0.2s';

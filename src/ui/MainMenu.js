@@ -57,15 +57,17 @@ class MainMenu {
         btn.style.padding = '15px 30px';
         btn.style.fontSize = '24px';
         btn.style.fontWeight = '800';
-        btn.style.fontFamily = 'Inter, sans-serif';
+        btn.style.fontFamily = '"Outfit", "Inter", sans-serif';
         btn.style.letterSpacing = '4px';
         btn.style.textAlign = 'left';
         btn.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
         btn.style.color = '#fff';
         btn.style.border = '2px solid transparent';
         btn.style.borderLeft = '6px solid #00f0ff';
+        btn.style.borderRadius = '8px';
         btn.style.cursor = 'pointer';
         btn.style.transition = 'all 0.2s';
+        btn.style.backdropFilter = 'blur(6px)';
         
         btn.addEventListener('mouseenter', () => {
             btn.style.backgroundColor = 'rgba(0, 240, 255, 0.2)';
@@ -73,7 +75,6 @@ class MainMenu {
             btn.style.borderLeft = '12px solid #00f0ff';
             btn.style.paddingLeft = '40px';
             btn.style.textShadow = '0 0 10px #00f0ff';
-            // play sound tick
         });
         
         btn.addEventListener('mouseleave', () => {

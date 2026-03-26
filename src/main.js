@@ -21,6 +21,7 @@ import competitiveFlow from './game/CompetitiveFlow.js';
 import hud from './ui/HUD.js';
 import uiManager from './ui/UIManager.js';
 import feedbackSystem from './game/FeedbackSystem.js';
+import statsManager from './game/StatsManager.js';
 import Bot, { BOT_TEAMS } from './entities/Bot.js';
 import Spike from './entities/Spike.js';
 import * as THREE from 'three';
@@ -136,6 +137,9 @@ const init = async () => {
         // Don't transition here yet, wait for assets to load fully.
     }
     window.bots.forEach(bot => engine.addUpdatable(bot));
+
+    // Initialize scoreboard tracking for all players
+    statsManager.initPlayers(window.bots || [], localId);
 
     // Initialize Game Managers
     engine.addUpdatable(roundManager);

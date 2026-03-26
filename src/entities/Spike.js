@@ -161,9 +161,12 @@ export default class Spike {
         this.fuseDisplay.style.transform = 'translateX(-50%)';
         this.fuseDisplay.style.fontSize = '32px';
         this.fuseDisplay.style.fontWeight = 'bold';
-        this.fuseDisplay.style.fontFamily = 'monospace';
+        this.fuseDisplay.style.fontFamily = '"Outfit", monospace';
         this.fuseDisplay.style.color = '#ff3333';
         this.fuseDisplay.style.textShadow = '0 0 15px #ff0000';
+        this.fuseDisplay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        this.fuseDisplay.style.padding = '6px 18px';
+        this.fuseDisplay.style.borderRadius = '10px';
         this.fuseDisplay.style.display = 'none';
         this.fuseDisplay.style.zIndex = '100';
         this.fuseDisplay.style.pointerEvents = 'none';
@@ -178,8 +181,9 @@ export default class Spike {
             if (gameState.currentState !== STATES.PLAYING) return;
             if (e.code !== 'KeyE') return;
             
-            if (this.state === SPIKE_STATE.IDLE && this.carrier) {
-                // Check if at a spike site
+            if (this.state === SPIKE_STATE.IDLE) {
+                // Player can plant if spike hasn't been planted yet
+                // (player is on attacker team and can always initiate a plant at a site)
                 const site = this.getNearestSite();
                 if (site) {
                     this.startPlanting(site);
