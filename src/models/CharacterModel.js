@@ -160,7 +160,7 @@ class CharacterModel {
 
         // Tactical Helmet (smooth hemisphere shape)
         const helmet = new THREE.Mesh(
-            new THREE.SphereGeometry(0.14, CYLINDER_SEGMENTS, 8, 0, Math.PI * 2, 0, Math.PI * 0.6),
+            new THREE.SphereGeometry(0.14, CYLINDER_SEGMENTS, CYLINDER_SEGMENTS, 0, Math.PI * 2, 0, Math.PI * 0.6),
             this.helmetMat
         );
         helmet.position.y = 0.06;
