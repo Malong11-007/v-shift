@@ -162,7 +162,7 @@ class PathfindingManager {
             const startGroup = this.pathfinding.getGroup(this.zoneId, start);
             const endGroup = this.pathfinding.getGroup(this.zoneId, end);
 
-            if (!startGroup || !endGroup) {
+            if (startGroup == null || endGroup == null) {
                 console.warn('Could not find navigation groups for start/end positions');
                 return null;
             }
